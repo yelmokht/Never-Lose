@@ -1,0 +1,4431 @@
+ARM GAS  C:\Users\brenn\AppData\Local\Temp\ccOzUpww.s 			page 1
+
+
+   1              		.syntax unified
+   2              		.cpu cortex-m3
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 1
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.thumb
+  14              		.syntax unified
+  15              		.file	"main.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.global	__aeabi_i2d
+  20              		.global	__aeabi_dmul
+  21              		.global	__aeabi_ddiv
+  22              		.global	__aeabi_dsub
+  23              		.global	__aeabi_d2f
+  24              		.section	.text.initialize_audio_vector,"ax",%progbits
+  25              		.align	2
+  26              		.global	initialize_audio_vector
+  27              		.thumb
+  28              		.thumb_func
+  29              		.type	initialize_audio_vector, %function
+  30              	initialize_audio_vector:
+  31              	.LFB64:
+  32              		.file 1 "main.c"
+   1:main.c        **** /*
+   2:main.c        ****  * ======================================================================================
+   3:main.c        ****  * Project name: Never Lose
+   4:main.c        ****  * Group number: 3
+   5:main.c        ****  * Authors : Aguilar Adriano, Azouar Mohamed, El Mokhtari Younes, Ferreira Ribeiro Brenno
+   6:main.c        ****  * Date: 23/05/2023
+   7:main.c        ****  * Github link: 
+   8:main.c        ****  * ======================================================================================
+   9:main.c        **** */
+  10:main.c        **** 
+  11:main.c        **** //Imports
+  12:main.c        **** #include <math.h>
+  13:main.c        **** #include "project.h"
+  14:main.c        **** #include "keypad.h"
+  15:main.c        **** #include <stdbool.h>
+  16:main.c        **** #include <string.h>
+  17:main.c        **** #include <stdio.h>
+  18:main.c        **** 
+  19:main.c        **** // Constants
+  20:main.c        **** #define UART_RX_DATA_LENGTH 5
+  21:main.c        **** #define N 100
+  22:main.c        **** #define PI 3.14
+  23:main.c        **** #define INITIAL_POSITION 900
+  24:main.c        **** #define RELEASE 1000                                       
+  25:main.c        **** #define PRESS 2000
+ARM GAS  C:\Users\brenn\AppData\Local\Temp\ccOzUpww.s 			page 2
+
+
+  26:main.c        **** #define JUMP_THRESHOLD_VALUE 2400
+  27:main.c        **** #define DUCK_THRESHOLD_VALUE 2000
+  28:main.c        **** #define HIGH 1
+  29:main.c        **** #define LOW 0
+  30:main.c        **** #define LEFT_ROW 0
+  31:main.c        **** #define LEFT_COLUMN 0
+  32:main.c        **** #define RIGHT_ROW 1
+  33:main.c        **** #define RIGHT_COLUMN 0
+  34:main.c        **** #define DEFAULT_DELAY 30
+  35:main.c        **** #define SCORE_INCREMENT_PER_SECOND 10
+  36:main.c        **** #define JUMP_KEY '1'
+  37:main.c        **** #define DUCK_KEY '3'
+  38:main.c        **** 
+  39:main.c        **** //Structures
+  40:main.c        **** typedef struct {
+  41:main.c        **** 	float position;
+  42:main.c        **** 	float speed;
+  43:main.c        **** } dino_t;
+  44:main.c        **** 
+  45:main.c        **** typedef struct {
+  46:main.c        **** 	float position;
+  47:main.c        ****     float width;
+  48:main.c        **** } obstacle_t;
+  49:main.c        **** 
+  50:main.c        **** // Global variables
+  51:main.c        **** char uart_rx_buffer;
+  52:main.c        **** char uart_rx_data[UART_RX_DATA_LENGTH];
+  53:main.c        **** char score_message[32];
+  54:main.c        **** int uart_rx_counter = 0;
+  55:main.c        **** int speed = 0;
+  56:main.c        **** int score = 0;
+  57:main.c        **** int count = 0;
+  58:main.c        **** float jump_audio_vector[100];
+  59:main.c        **** float duck_audio_vector[100];
+  60:main.c        **** bool is_running = false;
+  61:main.c        **** bool is_ground_obstacle_detected = false;
+  62:main.c        **** bool is_flying_obstacle_detected = false;
+  63:main.c        **** 
+  64:main.c        **** // Functions
+  65:main.c        **** void initialize_audio_vector(float *audio_vector, int type) {
+  33              		.loc 1 65 0
+  34              		.cfi_startproc
+  35              		@ args = 0, pretend = 0, frame = 0
+  36              		@ frame_needed = 0, uses_anonymous_args = 0
+  37              	.LVL0:
+  38 0000 2DE9F041 		push	{r4, r5, r6, r7, r8, lr}
+  39              		.cfi_def_cfa_offset 24
+  40              		.cfi_offset 4, -24
+  41              		.cfi_offset 5, -20
+  42              		.cfi_offset 6, -16
+  43              		.cfi_offset 7, -12
+  44              		.cfi_offset 8, -8
+  45              		.cfi_offset 14, -4
+  46 0004 8046     		mov	r8, r0
+  47 0006 0D46     		mov	r5, r1
+  48              	.LVL1:
+  49              	.LBB2:
+ARM GAS  C:\Users\brenn\AppData\Local\Temp\ccOzUpww.s 			page 3
+
+
+  66:main.c        ****     for (int i = 0; i < N; i++){
+  50              		.loc 1 66 0
+  51 0008 0024     		movs	r4, #0
+  52 000a 26E0     		b	.L2
+  53              	.LVL2:
+  54              	.L3:
+  67:main.c        ****         audio_vector[i] = sin(type*PI/2 - 2*PI*i/N);
+  55              		.loc 1 67 0 discriminator 3
+  56 000c 2846     		mov	r0, r5
+  57 000e FFF7FEFF 		bl	__aeabi_i2d
+  58              	.LVL3:
+  59 0012 15A3     		adr	r3, .L5
+  60 0014 D3E90023 		ldrd	r2, [r3]
+  61 0018 FFF7FEFF 		bl	__aeabi_dmul
+  62              	.LVL4:
+  63 001c 0022     		movs	r2, #0
+  64 001e 164B     		ldr	r3, .L5+16
+  65 0020 FFF7FEFF 		bl	__aeabi_dmul
+  66              	.LVL5:
+  67 0024 0646     		mov	r6, r0
+  68 0026 0F46     		mov	r7, r1
+  69 0028 2046     		mov	r0, r4
+  70 002a FFF7FEFF 		bl	__aeabi_i2d
+  71              	.LVL6:
+  72 002e 10A3     		adr	r3, .L5+8
+  73 0030 D3E90023 		ldrd	r2, [r3]
+  74 0034 FFF7FEFF 		bl	__aeabi_dmul
+  75              	.LVL7:
+  76 0038 0022     		movs	r2, #0
+  77 003a 104B     		ldr	r3, .L5+20
+  78 003c FFF7FEFF 		bl	__aeabi_ddiv
+  79              	.LVL8:
+  80 0040 0246     		mov	r2, r0
+  81 0042 0B46     		mov	r3, r1
+  82 0044 3046     		mov	r0, r6
+  83 0046 3946     		mov	r1, r7
+  84 0048 FFF7FEFF 		bl	__aeabi_dsub
+  85              	.LVL9:
+  86 004c FFF7FEFF 		bl	sin
+  87              	.LVL10:
+  88 0050 FFF7FEFF 		bl	__aeabi_d2f
+  89              	.LVL11:
+  90 0054 48F82400 		str	r0, [r8, r4, lsl #2]	@ float
+  66:main.c        ****     for (int i = 0; i < N; i++){
+  91              		.loc 1 66 0 discriminator 3
+  92 0058 0134     		adds	r4, r4, #1
+  93              	.LVL12:
+  94              	.L2:
+  66:main.c        ****     for (int i = 0; i < N; i++){
+  95              		.loc 1 66 0 is_stmt 0 discriminator 1
+  96 005a 632C     		cmp	r4, #99
+  97 005c D6DD     		ble	.L3
+  98              	.LBE2:
+  68:main.c        ****     }
+  69:main.c        **** }
+  99              		.loc 1 69 0 is_stmt 1
+ 100 005e BDE8F081 		pop	{r4, r5, r6, r7, r8, pc}
+ARM GAS  C:\Users\brenn\AppData\Local\Temp\ccOzUpww.s 			page 4
+
+
+ 101              	.LVL13:
+ 102              	.L6:
+ 103 0062 00BFAFF3 		.align	3
+ 103      0080
+ 104              	.L5:
+ 105 0068 1F85EB51 		.word	1374389535
+ 106 006c B81E0940 		.word	1074339512
+ 107 0070 1F85EB51 		.word	1374389535
+ 108 0074 B81E1940 		.word	1075388088
+ 109 0078 0000E03F 		.word	1071644672
+ 110 007c 00005940 		.word	1079574528
+ 111              		.cfi_endproc
+ 112              	.LFE64:
+ 113              		.size	initialize_audio_vector, .-initialize_audio_vector
+ 114              		.section	.text.initialize_servos,"ax",%progbits
+ 115              		.align	2
+ 116              		.global	initialize_servos
+ 117              		.thumb
+ 118              		.thumb_func
+ 119              		.type	initialize_servos, %function
+ 120              	initialize_servos:
+ 121              	.LFB65:
+  70:main.c        **** 
+  71:main.c        **** void initialize_servos() {
+ 122              		.loc 1 71 0
+ 123              		.cfi_startproc
+ 124              		@ args = 0, pretend = 0, frame = 0
+ 125              		@ frame_needed = 0, uses_anonymous_args = 0
+ 126 0000 08B5     		push	{r3, lr}
+ 127              		.cfi_def_cfa_offset 8
+ 128              		.cfi_offset 3, -8
+ 129              		.cfi_offset 14, -4
+  72:main.c        ****     PWM_WriteCompare1(INITIAL_POSITION);
+ 130              		.loc 1 72 0
+ 131 0002 4FF46170 		mov	r0, #900
+ 132 0006 FFF7FEFF 		bl	PWM_WriteCompare1
+ 133              	.LVL14:
+  73:main.c        ****     PWM_WriteCompare2(INITIAL_POSITION);
+ 134              		.loc 1 73 0
+ 135 000a 4FF46170 		mov	r0, #900
+ 136 000e FFF7FEFF 		bl	PWM_WriteCompare2
+ 137              	.LVL15:
+ 138 0012 08BD     		pop	{r3, pc}
+ 139              		.cfi_endproc
+ 140              	.LFE65:
+ 141              		.size	initialize_servos, .-initialize_servos
+ 142              		.section	.text.print_on_LCD,"ax",%progbits
+ 143              		.align	2
+ 144              		.global	print_on_LCD
+ 145              		.thumb
+ 146              		.thumb_func
+ 147              		.type	print_on_LCD, %function
+ 148              	print_on_LCD:
+ 149              	.LFB66:
+  74:main.c        **** }
+  75:main.c        **** 
+  76:main.c        **** void print_on_LCD(const char* message, const int row_number, const int column_number) {
+ARM GAS  C:\Users\brenn\AppData\Local\Temp\ccOzUpww.s 			page 5
+
+
+ 150              		.loc 1 76 0
+ 151              		.cfi_startproc
+ 152              		@ args = 0, pretend = 0, frame = 0
+ 153              		@ frame_needed = 0, uses_anonymous_args = 0
+ 154              	.LVL16:
+ 155 0000 10B5     		push	{r4, lr}
+ 156              		.cfi_def_cfa_offset 8
+ 157              		.cfi_offset 4, -8
+ 158              		.cfi_offset 14, -4
+ 159 0002 0446     		mov	r4, r0
+  77:main.c        ****     LCD_Position(row_number, column_number);
+ 160              		.loc 1 77 0
+ 161 0004 C8B2     		uxtb	r0, r1
+ 162              	.LVL17:
+ 163 0006 D1B2     		uxtb	r1, r2
+ 164              	.LVL18:
+ 165 0008 FFF7FEFF 		bl	LCD_Position
+ 166              	.LVL19:
+  78:main.c        ****     LCD_PrintString(message);
+ 167              		.loc 1 78 0
+ 168 000c 2046     		mov	r0, r4
+ 169 000e FFF7FEFF 		bl	LCD_PrintString
+ 170              	.LVL20:
+ 171 0012 10BD     		pop	{r4, pc}
+ 172              		.cfi_endproc
+ 173              	.LFE66:
+ 174              		.size	print_on_LCD, .-print_on_LCD
+ 175              		.section	.text.detect_obstacle,"ax",%progbits
+ 176              		.align	2
+ 177              		.global	detect_obstacle
+ 178              		.thumb
+ 179              		.thumb_func
+ 180              		.type	detect_obstacle, %function
+ 181              	detect_obstacle:
+ 182              	.LFB67:
+  79:main.c        **** }
+  80:main.c        **** 
+  81:main.c        **** void detect_obstacle() {
+ 183              		.loc 1 81 0
+ 184              		.cfi_startproc
+ 185              		@ args = 0, pretend = 0, frame = 0
+ 186              		@ frame_needed = 0, uses_anonymous_args = 0
+ 187 0000 38B5     		push	{r3, r4, r5, lr}
+ 188              		.cfi_def_cfa_offset 16
+ 189              		.cfi_offset 3, -16
+ 190              		.cfi_offset 4, -12
+ 191              		.cfi_offset 5, -8
+ 192              		.cfi_offset 14, -4
+  82:main.c        ****     AMux_Select(0);
+ 193              		.loc 1 82 0
+ 194 0002 0020     		movs	r0, #0
+ 195 0004 FFF7FEFF 		bl	AMux_Select
+ 196              	.LVL21:
+  83:main.c        ****     CyDelay(10);
+ 197              		.loc 1 83 0
+ 198 0008 0A20     		movs	r0, #10
+ 199 000a FFF7FEFF 		bl	CyDelay
+ARM GAS  C:\Users\brenn\AppData\Local\Temp\ccOzUpww.s 			page 6
+
+
+ 200              	.LVL22:
+  84:main.c        ****     int32_t jump_value= ADC_Read32();
+ 201              		.loc 1 84 0
+ 202 000e FFF7FEFF 		bl	ADC_Read32
+ 203              	.LVL23:
+  85:main.c        ****     jump_value = jump_value*5000/0xFFFF;
+ 204              		.loc 1 85 0
+ 205 0012 41F28834 		movw	r4, #5000
+ 206 0016 04FB00F5 		mul	r5, r4, r0
+ 207              	.LVL24:
+  86:main.c        ****     
+  87:main.c        ****     AMux_Select(1);
+ 208              		.loc 1 87 0
+ 209 001a 0120     		movs	r0, #1
+ 210 001c FFF7FEFF 		bl	AMux_Select
+ 211              	.LVL25:
+  88:main.c        ****     CyDelay(10);
+ 212              		.loc 1 88 0
+ 213 0020 0A20     		movs	r0, #10
+ 214 0022 FFF7FEFF 		bl	CyDelay
+ 215              	.LVL26:
+  89:main.c        ****     int32_t duck_value = ADC_Read32();
+ 216              		.loc 1 89 0
+ 217 0026 FFF7FEFF 		bl	ADC_Read32
+ 218              	.LVL27:
+  90:main.c        ****     duck_value = duck_value*5000/0xFFFF;
+ 219              		.loc 1 90 0
+ 220 002a 04FB00F0 		mul	r0, r4, r0
+ 221              	.LVL28:
+  91:main.c        ****    
+  92:main.c        ****     
+  93:main.c        ****     if (jump_value < JUMP_THRESHOLD_VALUE) {
+ 222              		.loc 1 93 0
+ 223 002e 064B     		ldr	r3, .L15
+ 224 0030 9D42     		cmp	r5, r3
+ 225 0032 02DC     		bgt	.L12
+  94:main.c        ****         is_ground_obstacle_detected = true;
+ 226              		.loc 1 94 0
+ 227 0034 0122     		movs	r2, #1
+ 228 0036 054B     		ldr	r3, .L15+4
+ 229 0038 1A70     		strb	r2, [r3]
+ 230              	.L12:
+  95:main.c        ****     }
+  96:main.c        ****     
+  97:main.c        ****     if (duck_value < DUCK_THRESHOLD_VALUE) {
+ 231              		.loc 1 97 0
+ 232 003a 054B     		ldr	r3, .L15+8
+ 233 003c 9842     		cmp	r0, r3
+ 234 003e 02DC     		bgt	.L11
+  98:main.c        ****         is_flying_obstacle_detected = true;
+ 235              		.loc 1 98 0
+ 236 0040 0122     		movs	r2, #1
+ 237 0042 024B     		ldr	r3, .L15+4
+ 238 0044 5A70     		strb	r2, [r3, #1]
+ 239              	.L11:
+ 240 0046 38BD     		pop	{r3, r4, r5, pc}
+ 241              	.LVL29:
+ARM GAS  C:\Users\brenn\AppData\Local\Temp\ccOzUpww.s 			page 7
+
+
+ 242              	.L16:
+ 243              		.align	2
+ 244              	.L15:
+ 245 0048 9FF65F09 		.word	157283999
+ 246 004c 00000000 		.word	.LANCHOR0
+ 247 0050 2FF8CF07 		.word	131069999
+ 248              		.cfi_endproc
+ 249              	.LFE67:
+ 250              		.size	detect_obstacle, .-detect_obstacle
+ 251              		.section	.text.is_dino_close_ground_obstacle,"ax",%progbits
+ 252              		.align	2
+ 253              		.global	is_dino_close_ground_obstacle
+ 254              		.thumb
+ 255              		.thumb_func
+ 256              		.type	is_dino_close_ground_obstacle, %function
+ 257              	is_dino_close_ground_obstacle:
+ 258              	.LFB68:
+  99:main.c        ****     } 
+ 100:main.c        ****     
+ 101:main.c        **** }
+ 102:main.c        **** 
+ 103:main.c        **** bool is_dino_close_ground_obstacle() {
+ 259              		.loc 1 103 0
+ 260              		.cfi_startproc
+ 261              		@ args = 0, pretend = 0, frame = 0
+ 262              		@ frame_needed = 0, uses_anonymous_args = 0
+ 263              		@ link register save eliminated.
+ 104:main.c        ****     bool result = is_ground_obstacle_detected;
+ 264              		.loc 1 104 0
+ 265 0000 024B     		ldr	r3, .L18
+ 266 0002 1878     		ldrb	r0, [r3]	@ zero_extendqisi2
+ 267              	.LVL30:
+ 105:main.c        ****     is_ground_obstacle_detected = false;
+ 268              		.loc 1 105 0
+ 269 0004 0022     		movs	r2, #0
+ 270 0006 1A70     		strb	r2, [r3]
+ 106:main.c        ****     return result;
+ 107:main.c        **** }
+ 271              		.loc 1 107 0
+ 272 0008 7047     		bx	lr
+ 273              	.L19:
+ 274 000a 00BF     		.align	2
+ 275              	.L18:
+ 276 000c 00000000 		.word	.LANCHOR0
+ 277              		.cfi_endproc
+ 278              	.LFE68:
+ 279              		.size	is_dino_close_ground_obstacle, .-is_dino_close_ground_obstacle
+ 280              		.section	.text.is_dino_close_flying_obstacle,"ax",%progbits
+ 281              		.align	2
+ 282              		.global	is_dino_close_flying_obstacle
+ 283              		.thumb
+ 284              		.thumb_func
+ 285              		.type	is_dino_close_flying_obstacle, %function
+ 286              	is_dino_close_flying_obstacle:
+ 287              	.LFB69:
+ 108:main.c        **** 
+ 109:main.c        **** bool is_dino_close_flying_obstacle() {
+ARM GAS  C:\Users\brenn\AppData\Local\Temp\ccOzUpww.s 			page 8
+
+
+ 288              		.loc 1 109 0
+ 289              		.cfi_startproc
+ 290              		@ args = 0, pretend = 0, frame = 0
+ 291              		@ frame_needed = 0, uses_anonymous_args = 0
+ 292              		@ link register save eliminated.
+ 110:main.c        ****     bool result = is_flying_obstacle_detected;
+ 293              		.loc 1 110 0
+ 294 0000 024B     		ldr	r3, .L21
+ 295 0002 5878     		ldrb	r0, [r3, #1]	@ zero_extendqisi2
+ 296              	.LVL31:
+ 111:main.c        ****     is_flying_obstacle_detected = false;
+ 297              		.loc 1 111 0
+ 298 0004 0022     		movs	r2, #0
+ 299 0006 5A70     		strb	r2, [r3, #1]
+ 112:main.c        ****     return result;
+ 113:main.c        **** }
+ 300              		.loc 1 113 0
+ 301 0008 7047     		bx	lr
+ 302              	.L22:
+ 303 000a 00BF     		.align	2
+ 304              	.L21:
+ 305 000c 00000000 		.word	.LANCHOR0
+ 306              		.cfi_endproc
+ 307              	.LFE69:
+ 308              		.size	is_dino_close_flying_obstacle, .-is_dino_close_flying_obstacle
+ 309              		.section	.text.servo_press_spacebar,"ax",%progbits
+ 310              		.align	2
+ 311              		.global	servo_press_spacebar
+ 312              		.thumb
+ 313              		.thumb_func
+ 314              		.type	servo_press_spacebar, %function
+ 315              	servo_press_spacebar:
+ 316              	.LFB70:
+ 114:main.c        **** 
+ 115:main.c        **** void servo_press_spacebar() {
+ 317              		.loc 1 115 0
+ 318              		.cfi_startproc
+ 319              		@ args = 0, pretend = 0, frame = 0
+ 320              		@ frame_needed = 0, uses_anonymous_args = 0
+ 321 0000 08B5     		push	{r3, lr}
+ 322              		.cfi_def_cfa_offset 8
+ 323              		.cfi_offset 3, -8
+ 324              		.cfi_offset 14, -4
+ 116:main.c        ****     PWM_WriteCompare1(PRESS);
+ 325              		.loc 1 116 0
+ 326 0002 4FF4FA60 		mov	r0, #2000
+ 327 0006 FFF7FEFF 		bl	PWM_WriteCompare1
+ 328              	.LVL32:
+ 329 000a 08BD     		pop	{r3, pc}
+ 330              		.cfi_endproc
+ 331              	.LFE70:
+ 332              		.size	servo_press_spacebar, .-servo_press_spacebar
+ 333              		.section	.text.servo_release_spacebar,"ax",%progbits
+ 334              		.align	2
+ 335              		.global	servo_release_spacebar
+ 336              		.thumb
+ 337              		.thumb_func
+ARM GAS  C:\Users\brenn\AppData\Local\Temp\ccOzUpww.s 			page 9
+
+
+ 338              		.type	servo_release_spacebar, %function
+ 339              	servo_release_spacebar:
+ 340              	.LFB71:
+ 117:main.c        **** }
+ 118:main.c        **** 
+ 119:main.c        **** void servo_release_spacebar() {
+ 341              		.loc 1 119 0
+ 342              		.cfi_startproc
+ 343              		@ args = 0, pretend = 0, frame = 0
+ 344              		@ frame_needed = 0, uses_anonymous_args = 0
+ 345 0000 08B5     		push	{r3, lr}
+ 346              		.cfi_def_cfa_offset 8
+ 347              		.cfi_offset 3, -8
+ 348              		.cfi_offset 14, -4
+ 120:main.c        ****     PWM_WriteCompare1(RELEASE);
+ 349              		.loc 1 120 0
+ 350 0002 4FF47A70 		mov	r0, #1000
+ 351 0006 FFF7FEFF 		bl	PWM_WriteCompare1
+ 352              	.LVL33:
+ 353 000a 08BD     		pop	{r3, pc}
+ 354              		.cfi_endproc
+ 355              	.LFE71:
+ 356              		.size	servo_release_spacebar, .-servo_release_spacebar
+ 357              		.section	.text.servo_press_down_arrow_key,"ax",%progbits
+ 358              		.align	2
+ 359              		.global	servo_press_down_arrow_key
+ 360              		.thumb
+ 361              		.thumb_func
+ 362              		.type	servo_press_down_arrow_key, %function
+ 363              	servo_press_down_arrow_key:
+ 364              	.LFB72:
+ 121:main.c        **** }
+ 122:main.c        **** 
+ 123:main.c        **** void servo_press_down_arrow_key() {
+ 365              		.loc 1 123 0
+ 366              		.cfi_startproc
+ 367              		@ args = 0, pretend = 0, frame = 0
+ 368              		@ frame_needed = 0, uses_anonymous_args = 0
+ 369 0000 08B5     		push	{r3, lr}
+ 370              		.cfi_def_cfa_offset 8
+ 371              		.cfi_offset 3, -8
+ 372              		.cfi_offset 14, -4
+ 124:main.c        ****     PWM_WriteCompare2(PRESS);
+ 373              		.loc 1 124 0
+ 374 0002 4FF4FA60 		mov	r0, #2000
+ 375 0006 FFF7FEFF 		bl	PWM_WriteCompare2
+ 376              	.LVL34:
+ 377 000a 08BD     		pop	{r3, pc}
+ 378              		.cfi_endproc
+ 379              	.LFE72:
+ 380              		.size	servo_press_down_arrow_key, .-servo_press_down_arrow_key
+ 381              		.section	.text.servo_release_down_arrow_key,"ax",%progbits
+ 382              		.align	2
+ 383              		.global	servo_release_down_arrow_key
+ 384              		.thumb
+ 385              		.thumb_func
+ 386              		.type	servo_release_down_arrow_key, %function
+ARM GAS  C:\Users\brenn\AppData\Local\Temp\ccOzUpww.s 			page 10
+
+
+ 387              	servo_release_down_arrow_key:
+ 388              	.LFB73:
+ 125:main.c        **** }
+ 126:main.c        **** 
+ 127:main.c        **** void servo_release_down_arrow_key() {
+ 389              		.loc 1 127 0
+ 390              		.cfi_startproc
+ 391              		@ args = 0, pretend = 0, frame = 0
+ 392              		@ frame_needed = 0, uses_anonymous_args = 0
+ 393 0000 08B5     		push	{r3, lr}
+ 394              		.cfi_def_cfa_offset 8
+ 395              		.cfi_offset 3, -8
+ 396              		.cfi_offset 14, -4
+ 128:main.c        ****     PWM_WriteCompare2(RELEASE);
+ 397              		.loc 1 128 0
+ 398 0002 4FF47A70 		mov	r0, #1000
+ 399 0006 FFF7FEFF 		bl	PWM_WriteCompare2
+ 400              	.LVL35:
+ 401 000a 08BD     		pop	{r3, pc}
+ 402              		.cfi_endproc
+ 403              	.LFE73:
+ 404              		.size	servo_release_down_arrow_key, .-servo_release_down_arrow_key
+ 405              		.section	.text.set_LED1_and_LED2,"ax",%progbits
+ 406              		.align	2
+ 407              		.global	set_LED1_and_LED2
+ 408              		.thumb
+ 409              		.thumb_func
+ 410              		.type	set_LED1_and_LED2, %function
+ 411              	set_LED1_and_LED2:
+ 412              	.LFB74:
+ 129:main.c        **** }
+ 130:main.c        **** 
+ 131:main.c        **** void set_LED1_and_LED2(const int value) {
+ 413              		.loc 1 131 0
+ 414              		.cfi_startproc
+ 415              		@ args = 0, pretend = 0, frame = 0
+ 416              		@ frame_needed = 0, uses_anonymous_args = 0
+ 417              	.LVL36:
+ 418 0000 10B5     		push	{r4, lr}
+ 419              		.cfi_def_cfa_offset 8
+ 420              		.cfi_offset 4, -8
+ 421              		.cfi_offset 14, -4
+ 132:main.c        ****     LED_1_Write(value);
+ 422              		.loc 1 132 0
+ 423 0002 C4B2     		uxtb	r4, r0
+ 424 0004 2046     		mov	r0, r4
+ 425              	.LVL37:
+ 426 0006 FFF7FEFF 		bl	LED_1_Write
+ 427              	.LVL38:
+ 133:main.c        ****     LED_2_Write(value);
+ 428              		.loc 1 133 0
+ 429 000a 2046     		mov	r0, r4
+ 430 000c FFF7FEFF 		bl	LED_2_Write
+ 431              	.LVL39:
+ 432 0010 10BD     		pop	{r4, pc}
+ 433              		.cfi_endproc
+ 434              	.LFE74:
+ARM GAS  C:\Users\brenn\AppData\Local\Temp\ccOzUpww.s 			page 11
+
+
+ 435              		.size	set_LED1_and_LED2, .-set_LED1_and_LED2
+ 436 0012 00BF     		.section	.text.set_LED3_and_LED4,"ax",%progbits
+ 437              		.align	2
+ 438              		.global	set_LED3_and_LED4
+ 439              		.thumb
+ 440              		.thumb_func
+ 441              		.type	set_LED3_and_LED4, %function
+ 442              	set_LED3_and_LED4:
+ 443              	.LFB75:
+ 134:main.c        **** }
+ 135:main.c        **** 
+ 136:main.c        **** void set_LED3_and_LED4(const int value) {
+ 444              		.loc 1 136 0
+ 445              		.cfi_startproc
+ 446              		@ args = 0, pretend = 0, frame = 0
+ 447              		@ frame_needed = 0, uses_anonymous_args = 0
+ 448              	.LVL40:
+ 449 0000 10B5     		push	{r4, lr}
+ 450              		.cfi_def_cfa_offset 8
+ 451              		.cfi_offset 4, -8
+ 452              		.cfi_offset 14, -4
+ 137:main.c        ****     LED_3_Write(value);
+ 453              		.loc 1 137 0
+ 454 0002 C4B2     		uxtb	r4, r0
+ 455 0004 2046     		mov	r0, r4
+ 456              	.LVL41:
+ 457 0006 FFF7FEFF 		bl	LED_3_Write
+ 458              	.LVL42:
+ 138:main.c        ****     LED_4_Write(value);
+ 459              		.loc 1 138 0
+ 460 000a 2046     		mov	r0, r4
+ 461 000c FFF7FEFF 		bl	LED_4_Write
+ 462              	.LVL43:
+ 463 0010 10BD     		pop	{r4, pc}
+ 464              		.cfi_endproc
+ 465              	.LFE75:
+ 466              		.size	set_LED3_and_LED4, .-set_LED3_and_LED4
+ 467 0012 00BF     		.section	.text.send_data_to_PC,"ax",%progbits
+ 468              		.align	2
+ 469              		.global	send_data_to_PC
+ 470              		.thumb
+ 471              		.thumb_func
+ 472              		.type	send_data_to_PC, %function
+ 473              	send_data_to_PC:
+ 474              	.LFB76:
+ 139:main.c        **** }
+ 140:main.c        **** 
+ 141:main.c        **** void send_data_to_PC(const char* data) {
+ 475              		.loc 1 141 0
+ 476              		.cfi_startproc
+ 477              		@ args = 0, pretend = 0, frame = 0
+ 478              		@ frame_needed = 0, uses_anonymous_args = 0
+ 479              	.LVL44:
+ 480 0000 08B5     		push	{r3, lr}
+ 481              		.cfi_def_cfa_offset 8
+ 482              		.cfi_offset 3, -8
+ 483              		.cfi_offset 14, -4
+ARM GAS  C:\Users\brenn\AppData\Local\Temp\ccOzUpww.s 			page 12
+
+
+ 142:main.c        ****     UART_PutString(data);
+ 484              		.loc 1 142 0
+ 485 0002 FFF7FEFF 		bl	UART_PutString
+ 486              	.LVL45:
+ 487 0006 08BD     		pop	{r3, pc}
+ 488              		.cfi_endproc
+ 489              	.LFE76:
+ 490              		.size	send_data_to_PC, .-send_data_to_PC
+ 491              		.global	__aeabi_fmul
+ 492              		.global	__aeabi_f2uiz
+ 493              		.section	.text.play_sound_jump,"ax",%progbits
+ 494              		.align	2
+ 495              		.global	play_sound_jump
+ 496              		.thumb
+ 497              		.thumb_func
+ 498              		.type	play_sound_jump, %function
+ 499              	play_sound_jump:
+ 500              	.LFB77:
+ 143:main.c        **** }
+ 144:main.c        **** 
+ 145:main.c        **** 
+ 146:main.c        **** 
+ 147:main.c        **** void play_sound_jump() {
+ 501              		.loc 1 147 0
+ 502              		.cfi_startproc
+ 503              		@ args = 0, pretend = 0, frame = 0
+ 504              		@ frame_needed = 0, uses_anonymous_args = 0
+ 505 0000 10B5     		push	{r4, lr}
+ 506              		.cfi_def_cfa_offset 8
+ 507              		.cfi_offset 4, -8
+ 508              		.cfi_offset 14, -4
+ 509              	.LVL46:
+ 510              	.LBB3:
+ 148:main.c        ****     for (int i =0 ; i < N; i++){
+ 511              		.loc 1 148 0
+ 512 0002 0024     		movs	r4, #0
+ 513 0004 0EE0     		b	.L38
+ 514              	.LVL47:
+ 515              	.L39:
+ 149:main.c        ****         VDAC_SetValue(jump_audio_vector[i]*1000);
+ 516              		.loc 1 149 0 discriminator 3
+ 517 0006 0949     		ldr	r1, .L41
+ 518 0008 094B     		ldr	r3, .L41+4
+ 519 000a 53F82400 		ldr	r0, [r3, r4, lsl #2]	@ float
+ 520 000e FFF7FEFF 		bl	__aeabi_fmul
+ 521              	.LVL48:
+ 522 0012 FFF7FEFF 		bl	__aeabi_f2uiz
+ 523              	.LVL49:
+ 524 0016 C0B2     		uxtb	r0, r0
+ 525 0018 FFF7FEFF 		bl	VDAC_SetValue
+ 526              	.LVL50:
+ 150:main.c        ****         CyDelay(2);
+ 527              		.loc 1 150 0 discriminator 3
+ 528 001c 0220     		movs	r0, #2
+ 529 001e FFF7FEFF 		bl	CyDelay
+ 530              	.LVL51:
+ 148:main.c        ****     for (int i =0 ; i < N; i++){
+ARM GAS  C:\Users\brenn\AppData\Local\Temp\ccOzUpww.s 			page 13
+
+
+ 531              		.loc 1 148 0 discriminator 3
+ 532 0022 0134     		adds	r4, r4, #1
+ 533              	.LVL52:
+ 534              	.L38:
+ 148:main.c        ****     for (int i =0 ; i < N; i++){
+ 535              		.loc 1 148 0 is_stmt 0 discriminator 1
+ 536 0024 632C     		cmp	r4, #99
+ 537 0026 EEDD     		ble	.L39
+ 538              	.LBE3:
+ 151:main.c        ****     }
+ 152:main.c        **** }
+ 539              		.loc 1 152 0 is_stmt 1
+ 540 0028 10BD     		pop	{r4, pc}
+ 541              	.LVL53:
+ 542              	.L42:
+ 543 002a 00BF     		.align	2
+ 544              	.L41:
+ 545 002c 00007A44 		.word	1148846080
+ 546 0030 00000000 		.word	jump_audio_vector
+ 547              		.cfi_endproc
+ 548              	.LFE77:
+ 549              		.size	play_sound_jump, .-play_sound_jump
+ 550              		.section	.text.play_sound_duck,"ax",%progbits
+ 551              		.align	2
+ 552              		.global	play_sound_duck
+ 553              		.thumb
+ 554              		.thumb_func
+ 555              		.type	play_sound_duck, %function
+ 556              	play_sound_duck:
+ 557              	.LFB78:
+ 153:main.c        **** 
+ 154:main.c        **** void play_sound_duck() {
+ 558              		.loc 1 154 0
+ 559              		.cfi_startproc
+ 560              		@ args = 0, pretend = 0, frame = 0
+ 561              		@ frame_needed = 0, uses_anonymous_args = 0
+ 562 0000 10B5     		push	{r4, lr}
+ 563              		.cfi_def_cfa_offset 8
+ 564              		.cfi_offset 4, -8
+ 565              		.cfi_offset 14, -4
+ 566              	.LVL54:
+ 567              	.LBB4:
+ 155:main.c        ****     for (int i = N-1; i > 0; i--){
+ 568              		.loc 1 155 0
+ 569 0002 6324     		movs	r4, #99
+ 570 0004 0EE0     		b	.L44
+ 571              	.LVL55:
+ 572              	.L45:
+ 156:main.c        ****         VDAC_SetValue(duck_audio_vector[i]*1000);
+ 573              		.loc 1 156 0 discriminator 3
+ 574 0006 0949     		ldr	r1, .L47
+ 575 0008 094B     		ldr	r3, .L47+4
+ 576 000a 53F82400 		ldr	r0, [r3, r4, lsl #2]	@ float
+ 577 000e FFF7FEFF 		bl	__aeabi_fmul
+ 578              	.LVL56:
+ 579 0012 FFF7FEFF 		bl	__aeabi_f2uiz
+ 580              	.LVL57:
+ARM GAS  C:\Users\brenn\AppData\Local\Temp\ccOzUpww.s 			page 14
+
+
+ 581 0016 C0B2     		uxtb	r0, r0
+ 582 0018 FFF7FEFF 		bl	VDAC_SetValue
+ 583              	.LVL58:
+ 157:main.c        ****         CyDelay(2);
+ 584              		.loc 1 157 0 discriminator 3
+ 585 001c 0220     		movs	r0, #2
+ 586 001e FFF7FEFF 		bl	CyDelay
+ 587              	.LVL59:
+ 155:main.c        ****     for (int i = N-1; i > 0; i--){
+ 588              		.loc 1 155 0 discriminator 3
+ 589 0022 013C     		subs	r4, r4, #1
+ 590              	.LVL60:
+ 591              	.L44:
+ 155:main.c        ****     for (int i = N-1; i > 0; i--){
+ 592              		.loc 1 155 0 is_stmt 0 discriminator 1
+ 593 0024 002C     		cmp	r4, #0
+ 594 0026 EEDC     		bgt	.L45
+ 595              	.LBE4:
+ 158:main.c        ****     }
+ 159:main.c        **** }
+ 596              		.loc 1 159 0 is_stmt 1
+ 597 0028 10BD     		pop	{r4, pc}
+ 598              	.LVL61:
+ 599              	.L48:
+ 600 002a 00BF     		.align	2
+ 601              	.L47:
+ 602 002c 00007A44 		.word	1148846080
+ 603 0030 00000000 		.word	duck_audio_vector
+ 604              		.cfi_endproc
+ 605              	.LFE78:
+ 606              		.size	play_sound_duck, .-play_sound_duck
+ 607              		.section	.text.dino_jump,"ax",%progbits
+ 608              		.align	2
+ 609              		.global	dino_jump
+ 610              		.thumb
+ 611              		.thumb_func
+ 612              		.type	dino_jump, %function
+ 613              	dino_jump:
+ 614              	.LFB79:
+ 160:main.c        **** 
+ 161:main.c        **** void dino_jump() {
+ 615              		.loc 1 161 0
+ 616              		.cfi_startproc
+ 617              		@ args = 0, pretend = 0, frame = 0
+ 618              		@ frame_needed = 0, uses_anonymous_args = 0
+ 619 0000 08B5     		push	{r3, lr}
+ 620              		.cfi_def_cfa_offset 8
+ 621              		.cfi_offset 3, -8
+ 622              		.cfi_offset 14, -4
+ 162:main.c        ****     if (!is_running) {
+ 623              		.loc 1 162 0
+ 624 0002 114B     		ldr	r3, .L52
+ 625 0004 9B78     		ldrb	r3, [r3, #2]	@ zero_extendqisi2
+ 626 0006 23B9     		cbnz	r3, .L50
+ 163:main.c        ****         is_running = true;
+ 627              		.loc 1 163 0
+ 628 0008 0122     		movs	r2, #1
+ARM GAS  C:\Users\brenn\AppData\Local\Temp\ccOzUpww.s 			page 15
+
+
+ 629 000a 0F4B     		ldr	r3, .L52
+ 630 000c 9A70     		strb	r2, [r3, #2]
+ 164:main.c        ****         Timer_ISR_Enable();
+ 631              		.loc 1 164 0
+ 632 000e FFF7FEFF 		bl	Timer_ISR_Enable
+ 633              	.LVL62:
+ 634              	.L50:
+ 165:main.c        ****     }
+ 166:main.c        ****     servo_press_spacebar();
+ 635              		.loc 1 166 0
+ 636 0012 FFF7FEFF 		bl	servo_press_spacebar
+ 637              	.LVL63:
+ 167:main.c        ****     set_LED1_and_LED2(HIGH);
+ 638              		.loc 1 167 0
+ 639 0016 0120     		movs	r0, #1
+ 640 0018 FFF7FEFF 		bl	set_LED1_and_LED2
+ 641              	.LVL64:
+ 168:main.c        ****     send_data_to_PC("Jump\n");
+ 642              		.loc 1 168 0
+ 643 001c 0B48     		ldr	r0, .L52+4
+ 644 001e FFF7FEFF 		bl	send_data_to_PC
+ 645              	.LVL65:
+ 169:main.c        ****     print_on_LCD("Jump", LEFT_ROW, LEFT_COLUMN);
+ 646              		.loc 1 169 0
+ 647 0022 0022     		movs	r2, #0
+ 648 0024 1146     		mov	r1, r2
+ 649 0026 0A48     		ldr	r0, .L52+8
+ 650 0028 FFF7FEFF 		bl	print_on_LCD
+ 651              	.LVL66:
+ 170:main.c        ****     play_sound_jump();
+ 652              		.loc 1 170 0
+ 653 002c FFF7FEFF 		bl	play_sound_jump
+ 654              	.LVL67:
+ 171:main.c        ****     CyDelay(DEFAULT_DELAY);
+ 655              		.loc 1 171 0
+ 656 0030 1E20     		movs	r0, #30
+ 657 0032 FFF7FEFF 		bl	CyDelay
+ 658              	.LVL68:
+ 172:main.c        ****     servo_release_spacebar();
+ 659              		.loc 1 172 0
+ 660 0036 FFF7FEFF 		bl	servo_release_spacebar
+ 661              	.LVL69:
+ 173:main.c        ****     set_LED1_and_LED2(LOW);
+ 662              		.loc 1 173 0
+ 663 003a 0020     		movs	r0, #0
+ 664 003c FFF7FEFF 		bl	set_LED1_and_LED2
+ 665              	.LVL70:
+ 174:main.c        ****     LCD_ClearDisplay();
+ 666              		.loc 1 174 0
+ 667 0040 0120     		movs	r0, #1
+ 668 0042 FFF7FEFF 		bl	LCD_WriteControl
+ 669              	.LVL71:
+ 670 0046 08BD     		pop	{r3, pc}
+ 671              	.L53:
+ 672              		.align	2
+ 673              	.L52:
+ 674 0048 00000000 		.word	.LANCHOR0
+ARM GAS  C:\Users\brenn\AppData\Local\Temp\ccOzUpww.s 			page 16
+
+
+ 675 004c 00000000 		.word	.LC0
+ 676 0050 08000000 		.word	.LC1
+ 677              		.cfi_endproc
+ 678              	.LFE79:
+ 679              		.size	dino_jump, .-dino_jump
+ 680              		.section	.text.dino_duck,"ax",%progbits
+ 681              		.align	2
+ 682              		.global	dino_duck
+ 683              		.thumb
+ 684              		.thumb_func
+ 685              		.type	dino_duck, %function
+ 686              	dino_duck:
+ 687              	.LFB80:
+ 175:main.c        **** }
+ 176:main.c        **** 
+ 177:main.c        **** 
+ 178:main.c        **** void dino_duck() {
+ 688              		.loc 1 178 0
+ 689              		.cfi_startproc
+ 690              		@ args = 0, pretend = 0, frame = 0
+ 691              		@ frame_needed = 0, uses_anonymous_args = 0
+ 692 0000 08B5     		push	{r3, lr}
+ 693              		.cfi_def_cfa_offset 8
+ 694              		.cfi_offset 3, -8
+ 695              		.cfi_offset 14, -4
+ 179:main.c        ****     servo_press_down_arrow_key();
+ 696              		.loc 1 179 0
+ 697 0002 FFF7FEFF 		bl	servo_press_down_arrow_key
+ 698              	.LVL72:
+ 180:main.c        ****     set_LED3_and_LED4(HIGH);
+ 699              		.loc 1 180 0
+ 700 0006 0120     		movs	r0, #1
+ 701 0008 FFF7FEFF 		bl	set_LED3_and_LED4
+ 702              	.LVL73:
+ 181:main.c        ****     send_data_to_PC("Duck\n");
+ 703              		.loc 1 181 0
+ 704 000c 0A48     		ldr	r0, .L56
+ 705 000e FFF7FEFF 		bl	send_data_to_PC
+ 706              	.LVL74:
+ 182:main.c        ****     print_on_LCD("Duck", LEFT_ROW, LEFT_COLUMN);
+ 707              		.loc 1 182 0
+ 708 0012 0022     		movs	r2, #0
+ 709 0014 1146     		mov	r1, r2
+ 710 0016 0948     		ldr	r0, .L56+4
+ 711 0018 FFF7FEFF 		bl	print_on_LCD
+ 712              	.LVL75:
+ 183:main.c        ****     play_sound_duck();
+ 713              		.loc 1 183 0
+ 714 001c FFF7FEFF 		bl	play_sound_duck
+ 715              	.LVL76:
+ 184:main.c        ****     CyDelay(DEFAULT_DELAY);
+ 716              		.loc 1 184 0
+ 717 0020 1E20     		movs	r0, #30
+ 718 0022 FFF7FEFF 		bl	CyDelay
+ 719              	.LVL77:
+ 185:main.c        ****     servo_release_down_arrow_key();
+ 720              		.loc 1 185 0
+ARM GAS  C:\Users\brenn\AppData\Local\Temp\ccOzUpww.s 			page 17
+
+
+ 721 0026 FFF7FEFF 		bl	servo_release_down_arrow_key
+ 722              	.LVL78:
+ 186:main.c        ****     set_LED3_and_LED4(LOW);
+ 723              		.loc 1 186 0
+ 724 002a 0020     		movs	r0, #0
+ 725 002c FFF7FEFF 		bl	set_LED3_and_LED4
+ 726              	.LVL79:
+ 187:main.c        ****     LCD_ClearDisplay();
+ 727              		.loc 1 187 0
+ 728 0030 0120     		movs	r0, #1
+ 729 0032 FFF7FEFF 		bl	LCD_WriteControl
+ 730              	.LVL80:
+ 731 0036 08BD     		pop	{r3, pc}
+ 732              	.L57:
+ 733              		.align	2
+ 734              	.L56:
+ 735 0038 10000000 		.word	.LC2
+ 736 003c 18000000 		.word	.LC3
+ 737              		.cfi_endproc
+ 738              	.LFE80:
+ 739              		.size	dino_duck, .-dino_duck
+ 740              		.section	.text.RX_ISR_Handler,"ax",%progbits
+ 741              		.align	2
+ 742              		.global	RX_ISR_Handler
+ 743              		.thumb
+ 744              		.thumb_func
+ 745              		.type	RX_ISR_Handler, %function
+ 746              	RX_ISR_Handler:
+ 747              	.LFB83:
+ 188:main.c        **** }
+ 189:main.c        **** 
+ 190:main.c        **** void dino_reset() {
+ 191:main.c        ****     is_running = false;
+ 192:main.c        ****     Timer_ISR_Disable();
+ 193:main.c        ****     score = 0;
+ 194:main.c        **** }
+ 195:main.c        **** 
+ 196:main.c        **** void dino_increase_score() {
+ 197:main.c        ****     score += SCORE_INCREMENT_PER_SECOND;
+ 198:main.c        ****     sprintf(score_message, "%d", score); // Convert integer to string
+ 199:main.c        ****     print_on_LCD(score_message, RIGHT_ROW, LEFT_COLUMN);
+ 200:main.c        ****     
+ 201:main.c        **** }
+ 202:main.c        **** 
+ 203:main.c        **** // Interrupts
+ 204:main.c        **** CY_ISR(RX_ISR_Handler) {
+ 748              		.loc 1 204 0
+ 749              		.cfi_startproc
+ 750              		@ args = 0, pretend = 0, frame = 0
+ 751              		@ frame_needed = 0, uses_anonymous_args = 0
+ 752 0000 38B5     		push	{r3, r4, r5, lr}
+ 753              		.cfi_def_cfa_offset 16
+ 754              		.cfi_offset 3, -16
+ 755              		.cfi_offset 4, -12
+ 756              		.cfi_offset 5, -8
+ 757              		.cfi_offset 14, -4
+ 758              	.L66:
+ARM GAS  C:\Users\brenn\AppData\Local\Temp\ccOzUpww.s 			page 18
+
+
+ 205:main.c        ****     uint8_t status = 0;
+ 206:main.c        ****     do{
+ 207:main.c        ****         status = UART_ReadRxStatus (); // Checks if no UART Rx errors
+ 759              		.loc 1 207 0
+ 760 0002 FFF7FEFF 		bl	UART_ReadRxStatus
+ 761              	.LVL81:
+ 762 0006 0446     		mov	r4, r0
+ 763              	.LVL82:
+ 208:main.c        ****         if ((status & UART_RX_STS_PAR_ERROR) |
+ 764              		.loc 1 208 0
+ 765 0008 10F01E0F 		tst	r0, #30
+ 766 000c 06D0     		beq	.L59
+ 209:main.c        ****             (status & UART_RX_STS_STOP_ERROR) |
+ 210:main.c        ****             (status & UART_RX_STS_BREAK) |
+ 211:main.c        ****             (status & UART_RX_STS_OVERRUN) ) {
+ 212:main.c        ****             LCD_Position (1,0);
+ 767              		.loc 1 212 0
+ 768 000e 0021     		movs	r1, #0
+ 769 0010 0120     		movs	r0, #1
+ 770              	.LVL83:
+ 771 0012 FFF7FEFF 		bl	LCD_Position
+ 772              	.LVL84:
+ 213:main.c        ****             LCD_PrintString("UART err"); // Parity , framing , break or overrun error
+ 773              		.loc 1 213 0
+ 774 0016 2448     		ldr	r0, .L68
+ 775 0018 FFF7FEFF 		bl	LCD_PrintString
+ 776              	.LVL85:
+ 777              	.L59:
+ 778 001c 04F02004 		and	r4, r4, #32
+ 214:main.c        ****         }
+ 215:main.c        ****         if ((status & UART_RX_STS_FIFO_NOTEMPTY) != 0){ // Check that rx buffer is not empty and ge
+ 779              		.loc 1 215 0
+ 780 0020 04F0FF05 		and	r5, r4, #255
+ 781 0024 002C     		cmp	r4, #0
+ 782 0026 3BD0     		beq	.L60
+ 216:main.c        ****             uart_rx_buffer = UART_ReadRxData();
+ 783              		.loc 1 216 0
+ 784 0028 FFF7FEFF 		bl	UART_ReadRxData
+ 785              	.LVL86:
+ 786 002c 1F4B     		ldr	r3, .L68+4
+ 787 002e 1870     		strb	r0, [r3]
+ 217:main.c        ****             if (uart_rx_buffer != '\n') {   
+ 788              		.loc 1 217 0
+ 789 0030 0A28     		cmp	r0, #10
+ 790 0032 1BD0     		beq	.L61
+ 218:main.c        ****                 if (uart_rx_counter < UART_RX_DATA_LENGTH) {
+ 791              		.loc 1 218 0
+ 792 0034 1E4B     		ldr	r3, .L68+8
+ 793 0036 5B68     		ldr	r3, [r3, #4]
+ 794 0038 042B     		cmp	r3, #4
+ 795 003a 0BDC     		bgt	.L62
+ 219:main.c        ****                     uart_rx_data[uart_rx_counter] = uart_rx_buffer;
+ 796              		.loc 1 219 0
+ 797 003c 1D4A     		ldr	r2, .L68+12
+ 798 003e D054     		strb	r0, [r2, r3]
+ 220:main.c        ****                     UART_PutString("Received: ");
+ 799              		.loc 1 220 0
+ARM GAS  C:\Users\brenn\AppData\Local\Temp\ccOzUpww.s 			page 19
+
+
+ 800 0040 1D48     		ldr	r0, .L68+16
+ 801 0042 FFF7FEFF 		bl	UART_PutString
+ 802              	.LVL87:
+ 221:main.c        ****                     UART_PutChar(uart_rx_buffer);
+ 803              		.loc 1 221 0
+ 804 0046 194B     		ldr	r3, .L68+4
+ 805 0048 1878     		ldrb	r0, [r3]	@ zero_extendqisi2
+ 806 004a FFF7FEFF 		bl	UART_PutChar
+ 807              	.LVL88:
+ 222:main.c        ****                     UART_PutString("\n");
+ 808              		.loc 1 222 0
+ 809 004e 1B48     		ldr	r0, .L68+20
+ 810 0050 FFF7FEFF 		bl	UART_PutString
+ 811              	.LVL89:
+ 812              	.L62:
+ 223:main.c        ****                 }
+ 224:main.c        ****                 if (uart_rx_counter == UART_RX_DATA_LENGTH) {
+ 813              		.loc 1 224 0
+ 814 0054 164B     		ldr	r3, .L68+8
+ 815 0056 5B68     		ldr	r3, [r3, #4]
+ 816 0058 052B     		cmp	r3, #5
+ 817 005a 03D1     		bne	.L63
+ 225:main.c        ****                     memset(uart_rx_data, 0, sizeof(uart_rx_data));
+ 818              		.loc 1 225 0
+ 819 005c 154A     		ldr	r2, .L68+12
+ 820 005e 0021     		movs	r1, #0
+ 821 0060 1160     		str	r1, [r2]	@ unaligned
+ 822 0062 1171     		strb	r1, [r2, #4]
+ 823              	.L63:
+ 226:main.c        ****                 }
+ 227:main.c        ****                 uart_rx_counter += 1;
+ 824              		.loc 1 227 0
+ 825 0064 0133     		adds	r3, r3, #1
+ 826 0066 124A     		ldr	r2, .L68+8
+ 827 0068 5360     		str	r3, [r2, #4]
+ 828 006a 19E0     		b	.L60
+ 829              	.L61:
+ 228:main.c        ****             }
+ 229:main.c        ****             else {
+ 230:main.c        ****                 uart_rx_data[uart_rx_counter] = '\0'; // add null terminator
+ 830              		.loc 1 230 0
+ 831 006c 104B     		ldr	r3, .L68+8
+ 832 006e 5B68     		ldr	r3, [r3, #4]
+ 833 0070 1048     		ldr	r0, .L68+12
+ 834 0072 0022     		movs	r2, #0
+ 835 0074 C254     		strb	r2, [r0, r3]
+ 231:main.c        ****                 if (strncmp(uart_rx_data, "jump", 4) == 0) {
+ 836              		.loc 1 231 0
+ 837 0076 0422     		movs	r2, #4
+ 838 0078 1149     		ldr	r1, .L68+24
+ 839 007a FFF7FEFF 		bl	strncmp
+ 840              	.LVL90:
+ 841 007e 08B9     		cbnz	r0, .L64
+ 232:main.c        ****                     dino_jump();
+ 842              		.loc 1 232 0
+ 843 0080 FFF7FEFF 		bl	dino_jump
+ 844              	.LVL91:
+ARM GAS  C:\Users\brenn\AppData\Local\Temp\ccOzUpww.s 			page 20
+
+
+ 845              	.L64:
+ 233:main.c        ****                 }
+ 234:main.c        ****                 if (strncmp(uart_rx_data, "duck", 4) == 0) {
+ 846              		.loc 1 234 0
+ 847 0084 0422     		movs	r2, #4
+ 848 0086 0F49     		ldr	r1, .L68+28
+ 849 0088 0A48     		ldr	r0, .L68+12
+ 850 008a FFF7FEFF 		bl	strncmp
+ 851              	.LVL92:
+ 852 008e 08B9     		cbnz	r0, .L65
+ 235:main.c        ****                     dino_duck();
+ 853              		.loc 1 235 0
+ 854 0090 FFF7FEFF 		bl	dino_duck
+ 855              	.LVL93:
+ 856              	.L65:
+ 236:main.c        ****                 }
+ 237:main.c        ****                 memset(uart_rx_data, 0, sizeof(uart_rx_data));
+ 857              		.loc 1 237 0
+ 858 0094 074A     		ldr	r2, .L68+12
+ 859 0096 0023     		movs	r3, #0
+ 860 0098 1360     		str	r3, [r2]	@ unaligned
+ 861 009a 1371     		strb	r3, [r2, #4]
+ 238:main.c        ****                 uart_rx_counter = 0;
+ 862              		.loc 1 238 0
+ 863 009c 044A     		ldr	r2, .L68+8
+ 864 009e 5360     		str	r3, [r2, #4]
+ 865              	.L60:
+ 239:main.c        ****             }
+ 240:main.c        ****         }
+ 241:main.c        ****     } while (( status & UART_RX_STS_FIFO_NOTEMPTY) != 0);
+ 866              		.loc 1 241 0
+ 867 00a0 002D     		cmp	r5, #0
+ 868 00a2 AED1     		bne	.L66
+ 242:main.c        **** }
+ 869              		.loc 1 242 0
+ 870 00a4 38BD     		pop	{r3, r4, r5, pc}
+ 871              	.L69:
+ 872 00a6 00BF     		.align	2
+ 873              	.L68:
+ 874 00a8 20000000 		.word	.LC4
+ 875 00ac 00000000 		.word	uart_rx_buffer
+ 876 00b0 00000000 		.word	.LANCHOR0
+ 877 00b4 00000000 		.word	uart_rx_data
+ 878 00b8 2C000000 		.word	.LC5
+ 879 00bc 38000000 		.word	.LC6
+ 880 00c0 3C000000 		.word	.LC7
+ 881 00c4 44000000 		.word	.LC8
+ 882              		.cfi_endproc
+ 883              	.LFE83:
+ 884              		.size	RX_ISR_Handler, .-RX_ISR_Handler
+ 885              		.section	.text.dino_reset,"ax",%progbits
+ 886              		.align	2
+ 887              		.global	dino_reset
+ 888              		.thumb
+ 889              		.thumb_func
+ 890              		.type	dino_reset, %function
+ 891              	dino_reset:
+ARM GAS  C:\Users\brenn\AppData\Local\Temp\ccOzUpww.s 			page 21
+
+
+ 892              	.LFB81:
+ 190:main.c        ****     is_running = false;
+ 893              		.loc 1 190 0
+ 894              		.cfi_startproc
+ 895              		@ args = 0, pretend = 0, frame = 0
+ 896              		@ frame_needed = 0, uses_anonymous_args = 0
+ 897 0000 38B5     		push	{r3, r4, r5, lr}
+ 898              		.cfi_def_cfa_offset 16
+ 899              		.cfi_offset 3, -16
+ 900              		.cfi_offset 4, -12
+ 901              		.cfi_offset 5, -8
+ 902              		.cfi_offset 14, -4
+ 191:main.c        ****     Timer_ISR_Disable();
+ 903              		.loc 1 191 0
+ 904 0002 034C     		ldr	r4, .L72
+ 905 0004 0025     		movs	r5, #0
+ 906 0006 A570     		strb	r5, [r4, #2]
+ 192:main.c        ****     score = 0;
+ 907              		.loc 1 192 0
+ 908 0008 FFF7FEFF 		bl	Timer_ISR_Disable
+ 909              	.LVL94:
+ 193:main.c        **** }
+ 910              		.loc 1 193 0
+ 911 000c A560     		str	r5, [r4, #8]
+ 912 000e 38BD     		pop	{r3, r4, r5, pc}
+ 913              	.L73:
+ 914              		.align	2
+ 915              	.L72:
+ 916 0010 00000000 		.word	.LANCHOR0
+ 917              		.cfi_endproc
+ 918              	.LFE81:
+ 919              		.size	dino_reset, .-dino_reset
+ 920              		.section	.text.dino_increase_score,"ax",%progbits
+ 921              		.align	2
+ 922              		.global	dino_increase_score
+ 923              		.thumb
+ 924              		.thumb_func
+ 925              		.type	dino_increase_score, %function
+ 926              	dino_increase_score:
+ 927              	.LFB82:
+ 196:main.c        ****     score += SCORE_INCREMENT_PER_SECOND;
+ 928              		.loc 1 196 0
+ 929              		.cfi_startproc
+ 930              		@ args = 0, pretend = 0, frame = 0
+ 931              		@ frame_needed = 0, uses_anonymous_args = 0
+ 932 0000 10B5     		push	{r4, lr}
+ 933              		.cfi_def_cfa_offset 8
+ 934              		.cfi_offset 4, -8
+ 935              		.cfi_offset 14, -4
+ 197:main.c        ****     sprintf(score_message, "%d", score); // Convert integer to string
+ 936              		.loc 1 197 0
+ 937 0002 074B     		ldr	r3, .L76
+ 938 0004 9A68     		ldr	r2, [r3, #8]
+ 939 0006 0A32     		adds	r2, r2, #10
+ 940 0008 9A60     		str	r2, [r3, #8]
+ 198:main.c        ****     print_on_LCD(score_message, RIGHT_ROW, LEFT_COLUMN);
+ 941              		.loc 1 198 0
+ARM GAS  C:\Users\brenn\AppData\Local\Temp\ccOzUpww.s 			page 22
+
+
+ 942 000a 064C     		ldr	r4, .L76+4
+ 943 000c 0649     		ldr	r1, .L76+8
+ 944 000e 2046     		mov	r0, r4
+ 945 0010 FFF7FEFF 		bl	sprintf
+ 946              	.LVL95:
+ 199:main.c        ****     
+ 947              		.loc 1 199 0
+ 948 0014 0022     		movs	r2, #0
+ 949 0016 0121     		movs	r1, #1
+ 950 0018 2046     		mov	r0, r4
+ 951 001a FFF7FEFF 		bl	print_on_LCD
+ 952              	.LVL96:
+ 953 001e 10BD     		pop	{r4, pc}
+ 954              	.L77:
+ 955              		.align	2
+ 956              	.L76:
+ 957 0020 00000000 		.word	.LANCHOR0
+ 958 0024 00000000 		.word	score_message
+ 959 0028 4C000000 		.word	.LC9
+ 960              		.cfi_endproc
+ 961              	.LFE82:
+ 962              		.size	dino_increase_score, .-dino_increase_score
+ 963              		.section	.text.Timer_ISR_Handler,"ax",%progbits
+ 964              		.align	2
+ 965              		.global	Timer_ISR_Handler
+ 966              		.thumb
+ 967              		.thumb_func
+ 968              		.type	Timer_ISR_Handler, %function
+ 969              	Timer_ISR_Handler:
+ 970              	.LFB84:
+ 243:main.c        **** 
+ 244:main.c        **** CY_ISR(Timer_ISR_Handler){  
+ 971              		.loc 1 244 0
+ 972              		.cfi_startproc
+ 973              		@ args = 0, pretend = 0, frame = 0
+ 974              		@ frame_needed = 0, uses_anonymous_args = 0
+ 975 0000 08B5     		push	{r3, lr}
+ 976              		.cfi_def_cfa_offset 8
+ 977              		.cfi_offset 3, -8
+ 978              		.cfi_offset 14, -4
+ 245:main.c        ****     dino_increase_score();
+ 979              		.loc 1 245 0
+ 980 0002 FFF7FEFF 		bl	dino_increase_score
+ 981              	.LVL97:
+ 246:main.c        ****     Timer_ReadStatusRegister();
+ 982              		.loc 1 246 0
+ 983 0006 FFF7FEFF 		bl	Timer_ReadStatusRegister
+ 984              	.LVL98:
+ 985 000a 08BD     		pop	{r3, pc}
+ 986              		.cfi_endproc
+ 987              	.LFE84:
+ 988              		.size	Timer_ISR_Handler, .-Timer_ISR_Handler
+ 989              		.section	.text.main,"ax",%progbits
+ 990              		.align	2
+ 991              		.global	main
+ 992              		.thumb
+ 993              		.thumb_func
+ARM GAS  C:\Users\brenn\AppData\Local\Temp\ccOzUpww.s 			page 23
+
+
+ 994              		.type	main, %function
+ 995              	main:
+ 996              	.LFB85:
+ 247:main.c        **** }
+ 248:main.c        **** 
+ 249:main.c        **** int main(void) {
+ 997              		.loc 1 249 0
+ 998              		.cfi_startproc
+ 999              		@ Volatile: function does not return.
+ 1000              		@ args = 0, pretend = 0, frame = 0
+ 1001              		@ frame_needed = 0, uses_anonymous_args = 0
+ 1002 0000 08B5     		push	{r3, lr}
+ 1003              		.cfi_def_cfa_offset 8
+ 1004              		.cfi_offset 3, -8
+ 1005              		.cfi_offset 14, -4
+ 250:main.c        ****     CyGlobalIntEnable; /* Enable global interrupts. */
+ 1006              		.loc 1 250 0
+ 1007              		.syntax unified
+ 1008              	@ 250 "main.c" 1
+ 1009 0002 62B6     		CPSIE   i
+ 1010              	@ 0 "" 2
+ 251:main.c        ****     RX_ISR_StartEx(RX_ISR_Handler);
+ 1011              		.loc 1 251 0
+ 1012              		.thumb
+ 1013              		.syntax unified
+ 1014 0004 2448     		ldr	r0, .L88
+ 1015 0006 FFF7FEFF 		bl	RX_ISR_StartEx
+ 1016              	.LVL99:
+ 252:main.c        ****     UART_Start();
+ 1017              		.loc 1 252 0
+ 1018 000a FFF7FEFF 		bl	UART_Start
+ 1019              	.LVL100:
+ 253:main.c        ****     Timer_ISR_StartEx(Timer_ISR_Handler);
+ 1020              		.loc 1 253 0
+ 1021 000e 2348     		ldr	r0, .L88+4
+ 1022 0010 FFF7FEFF 		bl	Timer_ISR_StartEx
+ 1023              	.LVL101:
+ 254:main.c        ****     Timer_Start();
+ 1024              		.loc 1 254 0
+ 1025 0014 FFF7FEFF 		bl	Timer_Start
+ 1026              	.LVL102:
+ 255:main.c        ****     Clock_Start();
+ 1027              		.loc 1 255 0
+ 1028 0018 FFF7FEFF 		bl	Clock_Start
+ 1029              	.LVL103:
+ 256:main.c        ****     PWM_Start();
+ 1030              		.loc 1 256 0
+ 1031 001c FFF7FEFF 		bl	PWM_Start
+ 1032              	.LVL104:
+ 257:main.c        ****     VDAC_Start();
+ 1033              		.loc 1 257 0
+ 1034 0020 FFF7FEFF 		bl	VDAC_Start
+ 1035              	.LVL105:
+ 258:main.c        ****     AMux_Start();
+ 1036              		.loc 1 258 0
+ 1037 0024 FFF7FEFF 		bl	AMux_Start
+ 1038              	.LVL106:
+ARM GAS  C:\Users\brenn\AppData\Local\Temp\ccOzUpww.s 			page 24
+
+
+ 259:main.c        ****     ADC_Start();
+ 1039              		.loc 1 259 0
+ 1040 0028 FFF7FEFF 		bl	ADC_Start
+ 1041              	.LVL107:
+ 260:main.c        ****     ADC_StartConvert();
+ 1042              		.loc 1 260 0
+ 1043 002c FFF7FEFF 		bl	ADC_StartConvert
+ 1044              	.LVL108:
+ 261:main.c        ****     LCD_Start();
+ 1045              		.loc 1 261 0
+ 1046 0030 FFF7FEFF 		bl	LCD_Start
+ 1047              	.LVL109:
+ 262:main.c        ****     initialize_audio_vector(jump_audio_vector, 0);
+ 1048              		.loc 1 262 0
+ 1049 0034 0021     		movs	r1, #0
+ 1050 0036 1A48     		ldr	r0, .L88+8
+ 1051 0038 FFF7FEFF 		bl	initialize_audio_vector
+ 1052              	.LVL110:
+ 263:main.c        ****     initialize_audio_vector(duck_audio_vector, 1);
+ 1053              		.loc 1 263 0
+ 1054 003c 0121     		movs	r1, #1
+ 1055 003e 1948     		ldr	r0, .L88+12
+ 1056 0040 FFF7FEFF 		bl	initialize_audio_vector
+ 1057              	.LVL111:
+ 264:main.c        ****     initialize_servos();
+ 1058              		.loc 1 264 0
+ 1059 0044 FFF7FEFF 		bl	initialize_servos
+ 1060              	.LVL112:
+ 265:main.c        ****     
+ 266:main.c        ****     is_running = false;
+ 1061              		.loc 1 266 0
+ 1062 0048 0022     		movs	r2, #0
+ 1063 004a 174B     		ldr	r3, .L88+16
+ 1064 004c 9A70     		strb	r2, [r3, #2]
+ 267:main.c        ****     Timer_ISR_Disable();
+ 1065              		.loc 1 267 0
+ 1066 004e FFF7FEFF 		bl	Timer_ISR_Disable
+ 1067              	.LVL113:
+ 1068              	.L86:
+ 268:main.c        ****     for(;;) {
+ 269:main.c        ****         
+ 270:main.c        ****         detect_obstacle();
+ 1069              		.loc 1 270 0
+ 1070 0052 FFF7FEFF 		bl	detect_obstacle
+ 1071              	.LVL114:
+ 271:main.c        ****             
+ 272:main.c        ****         if  (SW_1_Read() || keypadScan() == JUMP_KEY || is_dino_close_ground_obstacle()) {
+ 1072              		.loc 1 272 0
+ 1073 0056 FFF7FEFF 		bl	SW_1_Read
+ 1074              	.LVL115:
+ 1075 005a 30B9     		cbnz	r0, .L81
+ 1076              		.loc 1 272 0 is_stmt 0 discriminator 1
+ 1077 005c FFF7FEFF 		bl	keypadScan
+ 1078              	.LVL116:
+ 1079 0060 3128     		cmp	r0, #49
+ 1080 0062 02D0     		beq	.L81
+ 1081              		.loc 1 272 0 discriminator 2
+ARM GAS  C:\Users\brenn\AppData\Local\Temp\ccOzUpww.s 			page 25
+
+
+ 1082 0064 FFF7FEFF 		bl	is_dino_close_ground_obstacle
+ 1083              	.LVL117:
+ 1084 0068 08B1     		cbz	r0, .L82
+ 1085              	.L81:
+ 273:main.c        ****             dino_jump();
+ 1086              		.loc 1 273 0 is_stmt 1
+ 1087 006a FFF7FEFF 		bl	dino_jump
+ 1088              	.LVL118:
+ 1089              	.L82:
+ 274:main.c        ****         }
+ 275:main.c        **** 
+ 276:main.c        ****         if (SW_2_Read() || keypadScan() == DUCK_KEY || is_dino_close_flying_obstacle()) {
+ 1090              		.loc 1 276 0
+ 1091 006e FFF7FEFF 		bl	SW_2_Read
+ 1092              	.LVL119:
+ 1093 0072 30B9     		cbnz	r0, .L83
+ 1094              		.loc 1 276 0 is_stmt 0 discriminator 1
+ 1095 0074 FFF7FEFF 		bl	keypadScan
+ 1096              	.LVL120:
+ 1097 0078 3328     		cmp	r0, #51
+ 1098 007a 02D0     		beq	.L83
+ 1099              		.loc 1 276 0 discriminator 2
+ 1100 007c FFF7FEFF 		bl	is_dino_close_flying_obstacle
+ 1101              	.LVL121:
+ 1102 0080 08B1     		cbz	r0, .L84
+ 1103              	.L83:
+ 277:main.c        ****             dino_duck();
+ 1104              		.loc 1 277 0 is_stmt 1
+ 1105 0082 FFF7FEFF 		bl	dino_duck
+ 1106              	.LVL122:
+ 1107              	.L84:
+ 278:main.c        ****         }
+ 279:main.c        **** 
+ 280:main.c        ****         if (SW_3_Read()) {
+ 1108              		.loc 1 280 0
+ 1109 0086 FFF7FEFF 		bl	SW_3_Read
+ 1110              	.LVL123:
+ 1111 008a 08B1     		cbz	r0, .L85
+ 281:main.c        ****             dino_reset();
+ 1112              		.loc 1 281 0
+ 1113 008c FFF7FEFF 		bl	dino_reset
+ 1114              	.LVL124:
+ 1115              	.L85:
+ 282:main.c        ****         }    
+ 283:main.c        **** 
+ 284:main.c        ****         CyDelay(10);  
+ 1116              		.loc 1 284 0
+ 1117 0090 0A20     		movs	r0, #10
+ 1118 0092 FFF7FEFF 		bl	CyDelay
+ 1119              	.LVL125:
+ 285:main.c        ****     }
+ 1120              		.loc 1 285 0
+ 1121 0096 DCE7     		b	.L86
+ 1122              	.L89:
+ 1123              		.align	2
+ 1124              	.L88:
+ 1125 0098 00000000 		.word	RX_ISR_Handler
+ARM GAS  C:\Users\brenn\AppData\Local\Temp\ccOzUpww.s 			page 26
+
+
+ 1126 009c 00000000 		.word	Timer_ISR_Handler
+ 1127 00a0 00000000 		.word	jump_audio_vector
+ 1128 00a4 00000000 		.word	duck_audio_vector
+ 1129 00a8 00000000 		.word	.LANCHOR0
+ 1130              		.cfi_endproc
+ 1131              	.LFE85:
+ 1132              		.size	main, .-main
+ 1133              		.global	is_flying_obstacle_detected
+ 1134              		.global	is_ground_obstacle_detected
+ 1135              		.global	is_running
+ 1136              		.comm	duck_audio_vector,400,4
+ 1137              		.comm	jump_audio_vector,400,4
+ 1138              		.global	count
+ 1139              		.global	score
+ 1140              		.global	speed
+ 1141              		.global	uart_rx_counter
+ 1142              		.comm	score_message,32,4
+ 1143              		.comm	uart_rx_data,5,4
+ 1144              		.comm	uart_rx_buffer,1,1
+ 1145              		.section	.rodata.str1.4,"aMS",%progbits,1
+ 1146              		.align	2
+ 1147              	.LC0:
+ 1148 0000 4A756D70 		.ascii	"Jump\012\000"
+ 1148      0A00
+ 1149 0006 0000     		.space	2
+ 1150              	.LC1:
+ 1151 0008 4A756D70 		.ascii	"Jump\000"
+ 1151      00
+ 1152 000d 000000   		.space	3
+ 1153              	.LC2:
+ 1154 0010 4475636B 		.ascii	"Duck\012\000"
+ 1154      0A00
+ 1155 0016 0000     		.space	2
+ 1156              	.LC3:
+ 1157 0018 4475636B 		.ascii	"Duck\000"
+ 1157      00
+ 1158 001d 000000   		.space	3
+ 1159              	.LC4:
+ 1160 0020 55415254 		.ascii	"UART err\000"
+ 1160      20657272 
+ 1160      00
+ 1161 0029 000000   		.space	3
+ 1162              	.LC5:
+ 1163 002c 52656365 		.ascii	"Received: \000"
+ 1163      69766564 
+ 1163      3A2000
+ 1164 0037 00       		.space	1
+ 1165              	.LC6:
+ 1166 0038 0A00     		.ascii	"\012\000"
+ 1167 003a 0000     		.space	2
+ 1168              	.LC7:
+ 1169 003c 6A756D70 		.ascii	"jump\000"
+ 1169      00
+ 1170 0041 000000   		.space	3
+ 1171              	.LC8:
+ 1172 0044 6475636B 		.ascii	"duck\000"
+ 1172      00
+ARM GAS  C:\Users\brenn\AppData\Local\Temp\ccOzUpww.s 			page 27
+
+
+ 1173 0049 000000   		.space	3
+ 1174              	.LC9:
+ 1175 004c 256400   		.ascii	"%d\000"
+ 1176              		.bss
+ 1177              		.align	2
+ 1178              		.set	.LANCHOR0,. + 0
+ 1179              		.type	is_ground_obstacle_detected, %object
+ 1180              		.size	is_ground_obstacle_detected, 1
+ 1181              	is_ground_obstacle_detected:
+ 1182 0000 00       		.space	1
+ 1183              		.type	is_flying_obstacle_detected, %object
+ 1184              		.size	is_flying_obstacle_detected, 1
+ 1185              	is_flying_obstacle_detected:
+ 1186 0001 00       		.space	1
+ 1187              		.type	is_running, %object
+ 1188              		.size	is_running, 1
+ 1189              	is_running:
+ 1190 0002 00       		.space	1
+ 1191 0003 00       		.space	1
+ 1192              		.type	uart_rx_counter, %object
+ 1193              		.size	uart_rx_counter, 4
+ 1194              	uart_rx_counter:
+ 1195 0004 00000000 		.space	4
+ 1196              		.type	score, %object
+ 1197              		.size	score, 4
+ 1198              	score:
+ 1199 0008 00000000 		.space	4
+ 1200              		.type	count, %object
+ 1201              		.size	count, 4
+ 1202              	count:
+ 1203 000c 00000000 		.space	4
+ 1204              		.type	speed, %object
+ 1205              		.size	speed, 4
+ 1206              	speed:
+ 1207 0010 00000000 		.space	4
+ 1208              		.text
+ 1209              	.Letext0:
+ 1210              		.file 2 "c:\\program files (x86)\\cypress\\psoc creator\\4.4\\psoc creator\\import\\gnu\\arm\\5.4.
+ 1211              		.file 3 "c:\\program files (x86)\\cypress\\psoc creator\\4.4\\psoc creator\\import\\gnu\\arm\\5.4.
+ 1212              		.file 4 "Generated_Source\\PSoC5/cytypes.h"
+ 1213              		.file 5 "Generated_Source\\PSoC5/core_cm3.h"
+ 1214              		.file 6 "Generated_Source\\PSoC5/PWM.h"
+ 1215              		.file 7 "Generated_Source\\PSoC5/LCD.h"
+ 1216              		.file 8 "Generated_Source\\PSoC5/AMux.h"
+ 1217              		.file 9 "Generated_Source\\PSoC5/CyLib.h"
+ 1218              		.file 10 "Generated_Source\\PSoC5/ADC.h"
+ 1219              		.file 11 "Generated_Source\\PSoC5/LED_1.h"
+ 1220              		.file 12 "Generated_Source\\PSoC5/LED_2.h"
+ 1221              		.file 13 "Generated_Source\\PSoC5/LED_3.h"
+ 1222              		.file 14 "Generated_Source\\PSoC5/LED_4.h"
+ 1223              		.file 15 "Generated_Source\\PSoC5/UART.h"
+ 1224              		.file 16 "Generated_Source\\PSoC5/VDAC.h"
+ 1225              		.file 17 "Generated_Source\\PSoC5/Timer_ISR.h"
+ 1226              		.file 18 "c:\\program files (x86)\\cypress\\psoc creator\\4.4\\psoc creator\\import\\gnu\\arm\\5.4
+ 1227              		.file 19 "c:\\program files (x86)\\cypress\\psoc creator\\4.4\\psoc creator\\import\\gnu\\arm\\5.4
+ 1228              		.file 20 "Generated_Source\\PSoC5/Timer.h"
+ 1229              		.file 21 "Generated_Source\\PSoC5/RX_ISR.h"
+ARM GAS  C:\Users\brenn\AppData\Local\Temp\ccOzUpww.s 			page 28
+
+
+ 1230              		.file 22 "Generated_Source\\PSoC5/Clock.h"
+ 1231              		.file 23 "Generated_Source\\PSoC5/SW_1.h"
+ 1232              		.file 24 "keypad.h"
+ 1233              		.file 25 "Generated_Source\\PSoC5/SW_2.h"
+ 1234              		.file 26 "Generated_Source\\PSoC5/SW_3.h"
+ 1235              		.file 27 "c:\\program files (x86)\\cypress\\psoc creator\\4.4\\psoc creator\\import\\gnu\\arm\\5.4
+ 1236              		.section	.debug_info,"",%progbits
+ 1237              	.Ldebug_info0:
+ 1238 0000 A90B0000 		.4byte	0xba9
+ 1239 0004 0400     		.2byte	0x4
+ 1240 0006 00000000 		.4byte	.Ldebug_abbrev0
+ 1241 000a 04       		.byte	0x4
+ 1242 000b 01       		.uleb128 0x1
+ 1243 000c 8B050000 		.4byte	.LASF102
+ 1244 0010 0C       		.byte	0xc
+ 1245 0011 92040000 		.4byte	.LASF103
+ 1246 0015 36040000 		.4byte	.LASF104
+ 1247 0019 00000000 		.4byte	.Ldebug_ranges0+0
+ 1248 001d 00000000 		.4byte	0
+ 1249 0021 00000000 		.4byte	.Ldebug_line0
+ 1250 0025 02       		.uleb128 0x2
+ 1251 0026 04       		.byte	0x4
+ 1252 0027 05       		.byte	0x5
+ 1253 0028 696E7400 		.ascii	"int\000"
+ 1254 002c 03       		.uleb128 0x3
+ 1255 002d 04       		.byte	0x4
+ 1256 002e 07       		.byte	0x7
+ 1257 002f 13030000 		.4byte	.LASF0
+ 1258 0033 03       		.uleb128 0x3
+ 1259 0034 08       		.byte	0x8
+ 1260 0035 05       		.byte	0x5
+ 1261 0036 A7010000 		.4byte	.LASF1
+ 1262 003a 03       		.uleb128 0x3
+ 1263 003b 08       		.byte	0x8
+ 1264 003c 04       		.byte	0x4
+ 1265 003d 67020000 		.4byte	.LASF2
+ 1266 0041 03       		.uleb128 0x3
+ 1267 0042 01       		.byte	0x1
+ 1268 0043 06       		.byte	0x6
+ 1269 0044 C5020000 		.4byte	.LASF3
+ 1270 0048 04       		.uleb128 0x4
+ 1271 0049 28020000 		.4byte	.LASF7
+ 1272 004d 02       		.byte	0x2
+ 1273 004e 1D       		.byte	0x1d
+ 1274 004f 53000000 		.4byte	0x53
+ 1275 0053 03       		.uleb128 0x3
+ 1276 0054 01       		.byte	0x1
+ 1277 0055 08       		.byte	0x8
+ 1278 0056 7E020000 		.4byte	.LASF4
+ 1279 005a 03       		.uleb128 0x3
+ 1280 005b 02       		.byte	0x2
+ 1281 005c 05       		.byte	0x5
+ 1282 005d 7A000000 		.4byte	.LASF5
+ 1283 0061 03       		.uleb128 0x3
+ 1284 0062 02       		.byte	0x2
+ 1285 0063 07       		.byte	0x7
+ 1286 0064 7F030000 		.4byte	.LASF6
+ARM GAS  C:\Users\brenn\AppData\Local\Temp\ccOzUpww.s 			page 29
+
+
+ 1287 0068 04       		.uleb128 0x4
+ 1288 0069 C7040000 		.4byte	.LASF8
+ 1289 006d 02       		.byte	0x2
+ 1290 006e 3F       		.byte	0x3f
+ 1291 006f 73000000 		.4byte	0x73
+ 1292 0073 03       		.uleb128 0x3
+ 1293 0074 04       		.byte	0x4
+ 1294 0075 05       		.byte	0x5
+ 1295 0076 B3030000 		.4byte	.LASF9
+ 1296 007a 03       		.uleb128 0x3
+ 1297 007b 04       		.byte	0x4
+ 1298 007c 07       		.byte	0x7
+ 1299 007d 05020000 		.4byte	.LASF10
+ 1300 0081 03       		.uleb128 0x3
+ 1301 0082 08       		.byte	0x8
+ 1302 0083 07       		.byte	0x7
+ 1303 0084 B5010000 		.4byte	.LASF11
+ 1304 0088 03       		.uleb128 0x3
+ 1305 0089 04       		.byte	0x4
+ 1306 008a 07       		.byte	0x7
+ 1307 008b 84000000 		.4byte	.LASF12
+ 1308 008f 03       		.uleb128 0x3
+ 1309 0090 01       		.byte	0x1
+ 1310 0091 08       		.byte	0x8
+ 1311 0092 A4030000 		.4byte	.LASF13
+ 1312 0096 05       		.uleb128 0x5
+ 1313 0097 04       		.byte	0x4
+ 1314 0098 9C000000 		.4byte	0x9c
+ 1315 009c 06       		.uleb128 0x6
+ 1316 009d 8F000000 		.4byte	0x8f
+ 1317 00a1 03       		.uleb128 0x3
+ 1318 00a2 08       		.byte	0x8
+ 1319 00a3 04       		.byte	0x4
+ 1320 00a4 A1040000 		.4byte	.LASF14
+ 1321 00a8 03       		.uleb128 0x3
+ 1322 00a9 04       		.byte	0x4
+ 1323 00aa 04       		.byte	0x4
+ 1324 00ab 95010000 		.4byte	.LASF15
+ 1325 00af 04       		.uleb128 0x4
+ 1326 00b0 0C010000 		.4byte	.LASF16
+ 1327 00b4 03       		.byte	0x3
+ 1328 00b5 18       		.byte	0x18
+ 1329 00b6 48000000 		.4byte	0x48
+ 1330 00ba 04       		.uleb128 0x4
+ 1331 00bb 41010000 		.4byte	.LASF17
+ 1332 00bf 03       		.byte	0x3
+ 1333 00c0 2C       		.byte	0x2c
+ 1334 00c1 68000000 		.4byte	0x68
+ 1335 00c5 07       		.uleb128 0x7
+ 1336 00c6 30010000 		.4byte	.LASF18
+ 1337 00ca 04       		.byte	0x4
+ 1338 00cb E801     		.2byte	0x1e8
+ 1339 00cd 53000000 		.4byte	0x53
+ 1340 00d1 08       		.uleb128 0x8
+ 1341 00d2 D7020000 		.4byte	.LASF21
+ 1342 00d6 01       		.byte	0x1
+ 1343 00d7 41       		.byte	0x41
+ARM GAS  C:\Users\brenn\AppData\Local\Temp\ccOzUpww.s 			page 30
+
+
+ 1344 00d8 00000000 		.4byte	.LFB64
+ 1345 00dc 80000000 		.4byte	.LFE64-.LFB64
+ 1346 00e0 01       		.uleb128 0x1
+ 1347 00e1 9C       		.byte	0x9c
+ 1348 00e2 25010000 		.4byte	0x125
+ 1349 00e6 09       		.uleb128 0x9
+ 1350 00e7 A8040000 		.4byte	.LASF19
+ 1351 00eb 01       		.byte	0x1
+ 1352 00ec 41       		.byte	0x41
+ 1353 00ed 25010000 		.4byte	0x125
+ 1354 00f1 00000000 		.4byte	.LLST0
+ 1355 00f5 09       		.uleb128 0x9
+ 1356 00f6 FF020000 		.4byte	.LASF20
+ 1357 00fa 01       		.byte	0x1
+ 1358 00fb 41       		.byte	0x41
+ 1359 00fc 25000000 		.4byte	0x25
+ 1360 0100 2C000000 		.4byte	.LLST1
+ 1361 0104 0A       		.uleb128 0xa
+ 1362 0105 08000000 		.4byte	.LBB2
+ 1363 0109 56000000 		.4byte	.LBE2-.LBB2
+ 1364 010d 0B       		.uleb128 0xb
+ 1365 010e 6900     		.ascii	"i\000"
+ 1366 0110 01       		.byte	0x1
+ 1367 0111 42       		.byte	0x42
+ 1368 0112 25000000 		.4byte	0x25
+ 1369 0116 58000000 		.4byte	.LLST2
+ 1370 011a 0C       		.uleb128 0xc
+ 1371 011b 50000000 		.4byte	.LVL10
+ 1372 011f 0A0A0000 		.4byte	0xa0a
+ 1373 0123 00       		.byte	0
+ 1374 0124 00       		.byte	0
+ 1375 0125 05       		.uleb128 0x5
+ 1376 0126 04       		.byte	0x4
+ 1377 0127 A8000000 		.4byte	0xa8
+ 1378 012b 0D       		.uleb128 0xd
+ 1379 012c 09050000 		.4byte	.LASF26
+ 1380 0130 01       		.byte	0x1
+ 1381 0131 47       		.byte	0x47
+ 1382 0132 00000000 		.4byte	.LFB65
+ 1383 0136 14000000 		.4byte	.LFE65-.LFB65
+ 1384 013a 01       		.uleb128 0x1
+ 1385 013b 9C       		.byte	0x9c
+ 1386 013c 67010000 		.4byte	0x167
+ 1387 0140 0E       		.uleb128 0xe
+ 1388 0141 0A000000 		.4byte	.LVL14
+ 1389 0145 150A0000 		.4byte	0xa15
+ 1390 0149 55010000 		.4byte	0x155
+ 1391 014d 0F       		.uleb128 0xf
+ 1392 014e 01       		.uleb128 0x1
+ 1393 014f 50       		.byte	0x50
+ 1394 0150 03       		.uleb128 0x3
+ 1395 0151 0A       		.byte	0xa
+ 1396 0152 8403     		.2byte	0x384
+ 1397 0154 00       		.byte	0
+ 1398 0155 10       		.uleb128 0x10
+ 1399 0156 12000000 		.4byte	.LVL15
+ 1400 015a 200A0000 		.4byte	0xa20
+ARM GAS  C:\Users\brenn\AppData\Local\Temp\ccOzUpww.s 			page 31
+
+
+ 1401 015e 0F       		.uleb128 0xf
+ 1402 015f 01       		.uleb128 0x1
+ 1403 0160 50       		.byte	0x50
+ 1404 0161 03       		.uleb128 0x3
+ 1405 0162 0A       		.byte	0xa
+ 1406 0163 8403     		.2byte	0x384
+ 1407 0165 00       		.byte	0
+ 1408 0166 00       		.byte	0
+ 1409 0167 11       		.uleb128 0x11
+ 1410 0168 3E020000 		.4byte	.LASF22
+ 1411 016c 01       		.byte	0x1
+ 1412 016d 4C       		.byte	0x4c
+ 1413 016e 00000000 		.4byte	.LFB66
+ 1414 0172 14000000 		.4byte	.LFE66-.LFB66
+ 1415 0176 01       		.uleb128 0x1
+ 1416 0177 9C       		.byte	0x9c
+ 1417 0178 D6010000 		.4byte	0x1d6
+ 1418 017c 09       		.uleb128 0x9
+ 1419 017d 99040000 		.4byte	.LASF23
+ 1420 0181 01       		.byte	0x1
+ 1421 0182 4C       		.byte	0x4c
+ 1422 0183 96000000 		.4byte	0x96
+ 1423 0187 77000000 		.4byte	.LLST3
+ 1424 018b 09       		.uleb128 0x9
+ 1425 018c 22000000 		.4byte	.LASF24
+ 1426 0190 01       		.byte	0x1
+ 1427 0191 4C       		.byte	0x4c
+ 1428 0192 D6010000 		.4byte	0x1d6
+ 1429 0196 95000000 		.4byte	.LLST4
+ 1430 019a 09       		.uleb128 0x9
+ 1431 019b 59010000 		.4byte	.LASF25
+ 1432 019f 01       		.byte	0x1
+ 1433 01a0 4C       		.byte	0x4c
+ 1434 01a1 D6010000 		.4byte	0x1d6
+ 1435 01a5 B6000000 		.4byte	.LLST5
+ 1436 01a9 0E       		.uleb128 0xe
+ 1437 01aa 0C000000 		.4byte	.LVL19
+ 1438 01ae 2B0A0000 		.4byte	0xa2b
+ 1439 01b2 C5010000 		.4byte	0x1c5
+ 1440 01b6 0F       		.uleb128 0xf
+ 1441 01b7 01       		.uleb128 0x1
+ 1442 01b8 50       		.byte	0x50
+ 1443 01b9 03       		.uleb128 0x3
+ 1444 01ba F3       		.byte	0xf3
+ 1445 01bb 01       		.uleb128 0x1
+ 1446 01bc 51       		.byte	0x51
+ 1447 01bd 0F       		.uleb128 0xf
+ 1448 01be 01       		.uleb128 0x1
+ 1449 01bf 51       		.byte	0x51
+ 1450 01c0 03       		.uleb128 0x3
+ 1451 01c1 F3       		.byte	0xf3
+ 1452 01c2 01       		.uleb128 0x1
+ 1453 01c3 52       		.byte	0x52
+ 1454 01c4 00       		.byte	0
+ 1455 01c5 10       		.uleb128 0x10
+ 1456 01c6 12000000 		.4byte	.LVL20
+ 1457 01ca 360A0000 		.4byte	0xa36
+ARM GAS  C:\Users\brenn\AppData\Local\Temp\ccOzUpww.s 			page 32
+
+
+ 1458 01ce 0F       		.uleb128 0xf
+ 1459 01cf 01       		.uleb128 0x1
+ 1460 01d0 50       		.byte	0x50
+ 1461 01d1 02       		.uleb128 0x2
+ 1462 01d2 74       		.byte	0x74
+ 1463 01d3 00       		.sleb128 0
+ 1464 01d4 00       		.byte	0
+ 1465 01d5 00       		.byte	0
+ 1466 01d6 06       		.uleb128 0x6
+ 1467 01d7 25000000 		.4byte	0x25
+ 1468 01db 0D       		.uleb128 0xd
+ 1469 01dc EF020000 		.4byte	.LASF27
+ 1470 01e0 01       		.byte	0x1
+ 1471 01e1 51       		.byte	0x51
+ 1472 01e2 00000000 		.4byte	.LFB67
+ 1473 01e6 54000000 		.4byte	.LFE67-.LFB67
+ 1474 01ea 01       		.uleb128 0x1
+ 1475 01eb 9C       		.byte	0x9c
+ 1476 01ec 6D020000 		.4byte	0x26d
+ 1477 01f0 12       		.uleb128 0x12
+ 1478 01f1 87040000 		.4byte	.LASF28
+ 1479 01f5 01       		.byte	0x1
+ 1480 01f6 54       		.byte	0x54
+ 1481 01f7 BA000000 		.4byte	0xba
+ 1482 01fb D7000000 		.4byte	.LLST6
+ 1483 01ff 12       		.uleb128 0x12
+ 1484 0200 0E040000 		.4byte	.LASF29
+ 1485 0204 01       		.byte	0x1
+ 1486 0205 59       		.byte	0x59
+ 1487 0206 BA000000 		.4byte	0xba
+ 1488 020a FB000000 		.4byte	.LLST7
+ 1489 020e 0E       		.uleb128 0xe
+ 1490 020f 08000000 		.4byte	.LVL21
+ 1491 0213 410A0000 		.4byte	0xa41
+ 1492 0217 21020000 		.4byte	0x221
+ 1493 021b 0F       		.uleb128 0xf
+ 1494 021c 01       		.uleb128 0x1
+ 1495 021d 50       		.byte	0x50
+ 1496 021e 01       		.uleb128 0x1
+ 1497 021f 30       		.byte	0x30
+ 1498 0220 00       		.byte	0
+ 1499 0221 0E       		.uleb128 0xe
+ 1500 0222 0E000000 		.4byte	.LVL22
+ 1501 0226 4C0A0000 		.4byte	0xa4c
+ 1502 022a 34020000 		.4byte	0x234
+ 1503 022e 0F       		.uleb128 0xf
+ 1504 022f 01       		.uleb128 0x1
+ 1505 0230 50       		.byte	0x50
+ 1506 0231 01       		.uleb128 0x1
+ 1507 0232 3A       		.byte	0x3a
+ 1508 0233 00       		.byte	0
+ 1509 0234 0C       		.uleb128 0xc
+ 1510 0235 12000000 		.4byte	.LVL23
+ 1511 0239 570A0000 		.4byte	0xa57
+ 1512 023d 0E       		.uleb128 0xe
+ 1513 023e 20000000 		.4byte	.LVL25
+ 1514 0242 410A0000 		.4byte	0xa41
+ARM GAS  C:\Users\brenn\AppData\Local\Temp\ccOzUpww.s 			page 33
+
+
+ 1515 0246 50020000 		.4byte	0x250
+ 1516 024a 0F       		.uleb128 0xf
+ 1517 024b 01       		.uleb128 0x1
+ 1518 024c 50       		.byte	0x50
+ 1519 024d 01       		.uleb128 0x1
+ 1520 024e 31       		.byte	0x31
+ 1521 024f 00       		.byte	0
+ 1522 0250 0E       		.uleb128 0xe
+ 1523 0251 26000000 		.4byte	.LVL26
+ 1524 0255 4C0A0000 		.4byte	0xa4c
+ 1525 0259 63020000 		.4byte	0x263
+ 1526 025d 0F       		.uleb128 0xf
+ 1527 025e 01       		.uleb128 0x1
+ 1528 025f 50       		.byte	0x50
+ 1529 0260 01       		.uleb128 0x1
+ 1530 0261 3A       		.byte	0x3a
+ 1531 0262 00       		.byte	0
+ 1532 0263 0C       		.uleb128 0xc
+ 1533 0264 2A000000 		.4byte	.LVL27
+ 1534 0268 570A0000 		.4byte	0xa57
+ 1535 026c 00       		.byte	0
+ 1536 026d 13       		.uleb128 0x13
+ 1537 026e 30030000 		.4byte	.LASF30
+ 1538 0272 01       		.byte	0x1
+ 1539 0273 67       		.byte	0x67
+ 1540 0274 94020000 		.4byte	0x294
+ 1541 0278 00000000 		.4byte	.LFB68
+ 1542 027c 10000000 		.4byte	.LFE68-.LFB68
+ 1543 0280 01       		.uleb128 0x1
+ 1544 0281 9C       		.byte	0x9c
+ 1545 0282 94020000 		.4byte	0x294
+ 1546 0286 14       		.uleb128 0x14
+ 1547 0287 00000000 		.4byte	.LASF31
+ 1548 028b 01       		.byte	0x1
+ 1549 028c 68       		.byte	0x68
+ 1550 028d 94020000 		.4byte	0x294
+ 1551 0291 01       		.uleb128 0x1
+ 1552 0292 50       		.byte	0x50
+ 1553 0293 00       		.byte	0
+ 1554 0294 03       		.uleb128 0x3
+ 1555 0295 01       		.byte	0x1
+ 1556 0296 02       		.byte	0x2
+ 1557 0297 19040000 		.4byte	.LASF32
+ 1558 029b 13       		.uleb128 0x13
+ 1559 029c BF000000 		.4byte	.LASF33
+ 1560 02a0 01       		.byte	0x1
+ 1561 02a1 6D       		.byte	0x6d
+ 1562 02a2 94020000 		.4byte	0x294
+ 1563 02a6 00000000 		.4byte	.LFB69
+ 1564 02aa 10000000 		.4byte	.LFE69-.LFB69
+ 1565 02ae 01       		.uleb128 0x1
+ 1566 02af 9C       		.byte	0x9c
+ 1567 02b0 C2020000 		.4byte	0x2c2
+ 1568 02b4 14       		.uleb128 0x14
+ 1569 02b5 00000000 		.4byte	.LASF31
+ 1570 02b9 01       		.byte	0x1
+ 1571 02ba 6E       		.byte	0x6e
+ARM GAS  C:\Users\brenn\AppData\Local\Temp\ccOzUpww.s 			page 34
+
+
+ 1572 02bb 94020000 		.4byte	0x294
+ 1573 02bf 01       		.uleb128 0x1
+ 1574 02c0 50       		.byte	0x50
+ 1575 02c1 00       		.byte	0
+ 1576 02c2 0D       		.uleb128 0xd
+ 1577 02c3 4C000000 		.4byte	.LASF34
+ 1578 02c7 01       		.byte	0x1
+ 1579 02c8 73       		.byte	0x73
+ 1580 02c9 00000000 		.4byte	.LFB70
+ 1581 02cd 0C000000 		.4byte	.LFE70-.LFB70
+ 1582 02d1 01       		.uleb128 0x1
+ 1583 02d2 9C       		.byte	0x9c
+ 1584 02d3 E9020000 		.4byte	0x2e9
+ 1585 02d7 10       		.uleb128 0x10
+ 1586 02d8 0A000000 		.4byte	.LVL32
+ 1587 02dc 150A0000 		.4byte	0xa15
+ 1588 02e0 0F       		.uleb128 0xf
+ 1589 02e1 01       		.uleb128 0x1
+ 1590 02e2 50       		.byte	0x50
+ 1591 02e3 03       		.uleb128 0x3
+ 1592 02e4 0A       		.byte	0xa
+ 1593 02e5 D007     		.2byte	0x7d0
+ 1594 02e7 00       		.byte	0
+ 1595 02e8 00       		.byte	0
+ 1596 02e9 0D       		.uleb128 0xd
+ 1597 02ea AE020000 		.4byte	.LASF35
+ 1598 02ee 01       		.byte	0x1
+ 1599 02ef 77       		.byte	0x77
+ 1600 02f0 00000000 		.4byte	.LFB71
+ 1601 02f4 0C000000 		.4byte	.LFE71-.LFB71
+ 1602 02f8 01       		.uleb128 0x1
+ 1603 02f9 9C       		.byte	0x9c
+ 1604 02fa 10030000 		.4byte	0x310
+ 1605 02fe 10       		.uleb128 0x10
+ 1606 02ff 0A000000 		.4byte	.LVL33
+ 1607 0303 150A0000 		.4byte	0xa15
+ 1608 0307 0F       		.uleb128 0xf
+ 1609 0308 01       		.uleb128 0x1
+ 1610 0309 50       		.byte	0x50
+ 1611 030a 03       		.uleb128 0x3
+ 1612 030b 0A       		.byte	0xa
+ 1613 030c E803     		.2byte	0x3e8
+ 1614 030e 00       		.byte	0
+ 1615 030f 00       		.byte	0
+ 1616 0310 0D       		.uleb128 0xd
+ 1617 0311 07000000 		.4byte	.LASF36
+ 1618 0315 01       		.byte	0x1
+ 1619 0316 7B       		.byte	0x7b
+ 1620 0317 00000000 		.4byte	.LFB72
+ 1621 031b 0C000000 		.4byte	.LFE72-.LFB72
+ 1622 031f 01       		.uleb128 0x1
+ 1623 0320 9C       		.byte	0x9c
+ 1624 0321 37030000 		.4byte	0x337
+ 1625 0325 10       		.uleb128 0x10
+ 1626 0326 0A000000 		.4byte	.LVL34
+ 1627 032a 200A0000 		.4byte	0xa20
+ 1628 032e 0F       		.uleb128 0xf
+ARM GAS  C:\Users\brenn\AppData\Local\Temp\ccOzUpww.s 			page 35
+
+
+ 1629 032f 01       		.uleb128 0x1
+ 1630 0330 50       		.byte	0x50
+ 1631 0331 03       		.uleb128 0x3
+ 1632 0332 0A       		.byte	0xa
+ 1633 0333 D007     		.2byte	0x7d0
+ 1634 0335 00       		.byte	0
+ 1635 0336 00       		.byte	0
+ 1636 0337 0D       		.uleb128 0xd
+ 1637 0338 D1040000 		.4byte	.LASF37
+ 1638 033c 01       		.byte	0x1
+ 1639 033d 7F       		.byte	0x7f
+ 1640 033e 00000000 		.4byte	.LFB73
+ 1641 0342 0C000000 		.4byte	.LFE73-.LFB73
+ 1642 0346 01       		.uleb128 0x1
+ 1643 0347 9C       		.byte	0x9c
+ 1644 0348 5E030000 		.4byte	0x35e
+ 1645 034c 10       		.uleb128 0x10
+ 1646 034d 0A000000 		.4byte	.LVL35
+ 1647 0351 200A0000 		.4byte	0xa20
+ 1648 0355 0F       		.uleb128 0xf
+ 1649 0356 01       		.uleb128 0x1
+ 1650 0357 50       		.byte	0x50
+ 1651 0358 03       		.uleb128 0x3
+ 1652 0359 0A       		.byte	0xa
+ 1653 035a E803     		.2byte	0x3e8
+ 1654 035c 00       		.byte	0
+ 1655 035d 00       		.byte	0
+ 1656 035e 11       		.uleb128 0x11
+ 1657 035f 6C050000 		.4byte	.LASF38
+ 1658 0363 01       		.byte	0x1
+ 1659 0364 83       		.byte	0x83
+ 1660 0365 00000000 		.4byte	.LFB74
+ 1661 0369 12000000 		.4byte	.LFE74-.LFB74
+ 1662 036d 01       		.uleb128 0x1
+ 1663 036e 9C       		.byte	0x9c
+ 1664 036f A7030000 		.4byte	0x3a7
+ 1665 0373 09       		.uleb128 0x9
+ 1666 0374 F7000000 		.4byte	.LASF39
+ 1667 0378 01       		.byte	0x1
+ 1668 0379 83       		.byte	0x83
+ 1669 037a D6010000 		.4byte	0x1d6
+ 1670 037e 1F010000 		.4byte	.LLST8
+ 1671 0382 0E       		.uleb128 0xe
+ 1672 0383 0A000000 		.4byte	.LVL38
+ 1673 0387 620A0000 		.4byte	0xa62
+ 1674 038b 96030000 		.4byte	0x396
+ 1675 038f 0F       		.uleb128 0xf
+ 1676 0390 01       		.uleb128 0x1
+ 1677 0391 50       		.byte	0x50
+ 1678 0392 02       		.uleb128 0x2
+ 1679 0393 74       		.byte	0x74
+ 1680 0394 00       		.sleb128 0
+ 1681 0395 00       		.byte	0
+ 1682 0396 10       		.uleb128 0x10
+ 1683 0397 10000000 		.4byte	.LVL39
+ 1684 039b 6D0A0000 		.4byte	0xa6d
+ 1685 039f 0F       		.uleb128 0xf
+ARM GAS  C:\Users\brenn\AppData\Local\Temp\ccOzUpww.s 			page 36
+
+
+ 1686 03a0 01       		.uleb128 0x1
+ 1687 03a1 50       		.byte	0x50
+ 1688 03a2 02       		.uleb128 0x2
+ 1689 03a3 74       		.byte	0x74
+ 1690 03a4 00       		.sleb128 0
+ 1691 03a5 00       		.byte	0
+ 1692 03a6 00       		.byte	0
+ 1693 03a7 11       		.uleb128 0x11
+ 1694 03a8 75040000 		.4byte	.LASF40
+ 1695 03ac 01       		.byte	0x1
+ 1696 03ad 88       		.byte	0x88
+ 1697 03ae 00000000 		.4byte	.LFB75
+ 1698 03b2 12000000 		.4byte	.LFE75-.LFB75
+ 1699 03b6 01       		.uleb128 0x1
+ 1700 03b7 9C       		.byte	0x9c
+ 1701 03b8 F0030000 		.4byte	0x3f0
+ 1702 03bc 09       		.uleb128 0x9
+ 1703 03bd F7000000 		.4byte	.LASF39
+ 1704 03c1 01       		.byte	0x1
+ 1705 03c2 88       		.byte	0x88
+ 1706 03c3 D6010000 		.4byte	0x1d6
+ 1707 03c7 40010000 		.4byte	.LLST9
+ 1708 03cb 0E       		.uleb128 0xe
+ 1709 03cc 0A000000 		.4byte	.LVL42
+ 1710 03d0 780A0000 		.4byte	0xa78
+ 1711 03d4 DF030000 		.4byte	0x3df
+ 1712 03d8 0F       		.uleb128 0xf
+ 1713 03d9 01       		.uleb128 0x1
+ 1714 03da 50       		.byte	0x50
+ 1715 03db 02       		.uleb128 0x2
+ 1716 03dc 74       		.byte	0x74
+ 1717 03dd 00       		.sleb128 0
+ 1718 03de 00       		.byte	0
+ 1719 03df 10       		.uleb128 0x10
+ 1720 03e0 10000000 		.4byte	.LVL43
+ 1721 03e4 830A0000 		.4byte	0xa83
+ 1722 03e8 0F       		.uleb128 0xf
+ 1723 03e9 01       		.uleb128 0x1
+ 1724 03ea 50       		.byte	0x50
+ 1725 03eb 02       		.uleb128 0x2
+ 1726 03ec 74       		.byte	0x74
+ 1727 03ed 00       		.sleb128 0
+ 1728 03ee 00       		.byte	0
+ 1729 03ef 00       		.byte	0
+ 1730 03f0 11       		.uleb128 0x11
+ 1731 03f1 2D000000 		.4byte	.LASF41
+ 1732 03f5 01       		.byte	0x1
+ 1733 03f6 8D       		.byte	0x8d
+ 1734 03f7 00000000 		.4byte	.LFB76
+ 1735 03fb 08000000 		.4byte	.LFE76-.LFB76
+ 1736 03ff 01       		.uleb128 0x1
+ 1737 0400 9C       		.byte	0x9c
+ 1738 0401 26040000 		.4byte	0x426
+ 1739 0405 09       		.uleb128 0x9
+ 1740 0406 1F040000 		.4byte	.LASF42
+ 1741 040a 01       		.byte	0x1
+ 1742 040b 8D       		.byte	0x8d
+ARM GAS  C:\Users\brenn\AppData\Local\Temp\ccOzUpww.s 			page 37
+
+
+ 1743 040c 96000000 		.4byte	0x96
+ 1744 0410 61010000 		.4byte	.LLST10
+ 1745 0414 10       		.uleb128 0x10
+ 1746 0415 06000000 		.4byte	.LVL45
+ 1747 0419 8E0A0000 		.4byte	0xa8e
+ 1748 041d 0F       		.uleb128 0xf
+ 1749 041e 01       		.uleb128 0x1
+ 1750 041f 50       		.byte	0x50
+ 1751 0420 03       		.uleb128 0x3
+ 1752 0421 F3       		.byte	0xf3
+ 1753 0422 01       		.uleb128 0x1
+ 1754 0423 50       		.byte	0x50
+ 1755 0424 00       		.byte	0
+ 1756 0425 00       		.byte	0
+ 1757 0426 15       		.uleb128 0x15
+ 1758 0427 8D000000 		.4byte	.LASF43
+ 1759 042b 01       		.byte	0x1
+ 1760 042c 93       		.byte	0x93
+ 1761 042d 00000000 		.4byte	.LFB77
+ 1762 0431 34000000 		.4byte	.LFE77-.LFB77
+ 1763 0435 01       		.uleb128 0x1
+ 1764 0436 9C       		.byte	0x9c
+ 1765 0437 6B040000 		.4byte	0x46b
+ 1766 043b 0A       		.uleb128 0xa
+ 1767 043c 02000000 		.4byte	.LBB3
+ 1768 0440 26000000 		.4byte	.LBE3-.LBB3
+ 1769 0444 0B       		.uleb128 0xb
+ 1770 0445 6900     		.ascii	"i\000"
+ 1771 0447 01       		.byte	0x1
+ 1772 0448 94       		.byte	0x94
+ 1773 0449 25000000 		.4byte	0x25
+ 1774 044d 82010000 		.4byte	.LLST11
+ 1775 0451 0C       		.uleb128 0xc
+ 1776 0452 1C000000 		.4byte	.LVL50
+ 1777 0456 990A0000 		.4byte	0xa99
+ 1778 045a 10       		.uleb128 0x10
+ 1779 045b 22000000 		.4byte	.LVL51
+ 1780 045f 4C0A0000 		.4byte	0xa4c
+ 1781 0463 0F       		.uleb128 0xf
+ 1782 0464 01       		.uleb128 0x1
+ 1783 0465 50       		.byte	0x50
+ 1784 0466 01       		.uleb128 0x1
+ 1785 0467 32       		.byte	0x32
+ 1786 0468 00       		.byte	0
+ 1787 0469 00       		.byte	0
+ 1788 046a 00       		.byte	0
+ 1789 046b 15       		.uleb128 0x15
+ 1790 046c 34050000 		.4byte	.LASF44
+ 1791 0470 01       		.byte	0x1
+ 1792 0471 9A       		.byte	0x9a
+ 1793 0472 00000000 		.4byte	.LFB78
+ 1794 0476 34000000 		.4byte	.LFE78-.LFB78
+ 1795 047a 01       		.uleb128 0x1
+ 1796 047b 9C       		.byte	0x9c
+ 1797 047c B0040000 		.4byte	0x4b0
+ 1798 0480 0A       		.uleb128 0xa
+ 1799 0481 02000000 		.4byte	.LBB4
+ARM GAS  C:\Users\brenn\AppData\Local\Temp\ccOzUpww.s 			page 38
+
+
+ 1800 0485 26000000 		.4byte	.LBE4-.LBB4
+ 1801 0489 0B       		.uleb128 0xb
+ 1802 048a 6900     		.ascii	"i\000"
+ 1803 048c 01       		.byte	0x1
+ 1804 048d 9B       		.byte	0x9b
+ 1805 048e 25000000 		.4byte	0x25
+ 1806 0492 A1010000 		.4byte	.LLST12
+ 1807 0496 0C       		.uleb128 0xc
+ 1808 0497 1C000000 		.4byte	.LVL58
+ 1809 049b 990A0000 		.4byte	0xa99
+ 1810 049f 10       		.uleb128 0x10
+ 1811 04a0 22000000 		.4byte	.LVL59
+ 1812 04a4 4C0A0000 		.4byte	0xa4c
+ 1813 04a8 0F       		.uleb128 0xf
+ 1814 04a9 01       		.uleb128 0x1
+ 1815 04aa 50       		.byte	0x50
+ 1816 04ab 01       		.uleb128 0x1
+ 1817 04ac 32       		.byte	0x32
+ 1818 04ad 00       		.byte	0
+ 1819 04ae 00       		.byte	0
+ 1820 04af 00       		.byte	0
+ 1821 04b0 0D       		.uleb128 0xd
+ 1822 04b1 A4020000 		.4byte	.LASF45
+ 1823 04b5 01       		.byte	0x1
+ 1824 04b6 A1       		.byte	0xa1
+ 1825 04b7 00000000 		.4byte	.LFB79
+ 1826 04bb 54000000 		.4byte	.LFE79-.LFB79
+ 1827 04bf 01       		.uleb128 0x1
+ 1828 04c0 9C       		.byte	0x9c
+ 1829 04c1 6A050000 		.4byte	0x56a
+ 1830 04c5 0C       		.uleb128 0xc
+ 1831 04c6 12000000 		.4byte	.LVL62
+ 1832 04ca A40A0000 		.4byte	0xaa4
+ 1833 04ce 0C       		.uleb128 0xc
+ 1834 04cf 16000000 		.4byte	.LVL63
+ 1835 04d3 C2020000 		.4byte	0x2c2
+ 1836 04d7 0E       		.uleb128 0xe
+ 1837 04d8 1C000000 		.4byte	.LVL64
+ 1838 04dc 5E030000 		.4byte	0x35e
+ 1839 04e0 EA040000 		.4byte	0x4ea
+ 1840 04e4 0F       		.uleb128 0xf
+ 1841 04e5 01       		.uleb128 0x1
+ 1842 04e6 50       		.byte	0x50
+ 1843 04e7 01       		.uleb128 0x1
+ 1844 04e8 31       		.byte	0x31
+ 1845 04e9 00       		.byte	0
+ 1846 04ea 0E       		.uleb128 0xe
+ 1847 04eb 22000000 		.4byte	.LVL65
+ 1848 04ef F0030000 		.4byte	0x3f0
+ 1849 04f3 01050000 		.4byte	0x501
+ 1850 04f7 0F       		.uleb128 0xf
+ 1851 04f8 01       		.uleb128 0x1
+ 1852 04f9 50       		.byte	0x50
+ 1853 04fa 05       		.uleb128 0x5
+ 1854 04fb 03       		.byte	0x3
+ 1855 04fc 00000000 		.4byte	.LC0
+ 1856 0500 00       		.byte	0
+ARM GAS  C:\Users\brenn\AppData\Local\Temp\ccOzUpww.s 			page 39
+
+
+ 1857 0501 0E       		.uleb128 0xe
+ 1858 0502 2C000000 		.4byte	.LVL66
+ 1859 0506 67010000 		.4byte	0x167
+ 1860 050a 22050000 		.4byte	0x522
+ 1861 050e 0F       		.uleb128 0xf
+ 1862 050f 01       		.uleb128 0x1
+ 1863 0510 50       		.byte	0x50
+ 1864 0511 05       		.uleb128 0x5
+ 1865 0512 03       		.byte	0x3
+ 1866 0513 08000000 		.4byte	.LC1
+ 1867 0517 0F       		.uleb128 0xf
+ 1868 0518 01       		.uleb128 0x1
+ 1869 0519 51       		.byte	0x51
+ 1870 051a 01       		.uleb128 0x1
+ 1871 051b 30       		.byte	0x30
+ 1872 051c 0F       		.uleb128 0xf
+ 1873 051d 01       		.uleb128 0x1
+ 1874 051e 52       		.byte	0x52
+ 1875 051f 01       		.uleb128 0x1
+ 1876 0520 30       		.byte	0x30
+ 1877 0521 00       		.byte	0
+ 1878 0522 0C       		.uleb128 0xc
+ 1879 0523 30000000 		.4byte	.LVL67
+ 1880 0527 26040000 		.4byte	0x426
+ 1881 052b 0E       		.uleb128 0xe
+ 1882 052c 36000000 		.4byte	.LVL68
+ 1883 0530 4C0A0000 		.4byte	0xa4c
+ 1884 0534 3E050000 		.4byte	0x53e
+ 1885 0538 0F       		.uleb128 0xf
+ 1886 0539 01       		.uleb128 0x1
+ 1887 053a 50       		.byte	0x50
+ 1888 053b 01       		.uleb128 0x1
+ 1889 053c 4E       		.byte	0x4e
+ 1890 053d 00       		.byte	0
+ 1891 053e 0C       		.uleb128 0xc
+ 1892 053f 3A000000 		.4byte	.LVL69
+ 1893 0543 E9020000 		.4byte	0x2e9
+ 1894 0547 0E       		.uleb128 0xe
+ 1895 0548 40000000 		.4byte	.LVL70
+ 1896 054c 5E030000 		.4byte	0x35e
+ 1897 0550 5A050000 		.4byte	0x55a
+ 1898 0554 0F       		.uleb128 0xf
+ 1899 0555 01       		.uleb128 0x1
+ 1900 0556 50       		.byte	0x50
+ 1901 0557 01       		.uleb128 0x1
+ 1902 0558 30       		.byte	0x30
+ 1903 0559 00       		.byte	0
+ 1904 055a 10       		.uleb128 0x10
+ 1905 055b 46000000 		.4byte	.LVL71
+ 1906 055f AF0A0000 		.4byte	0xaaf
+ 1907 0563 0F       		.uleb128 0xf
+ 1908 0564 01       		.uleb128 0x1
+ 1909 0565 50       		.byte	0x50
+ 1910 0566 01       		.uleb128 0x1
+ 1911 0567 31       		.byte	0x31
+ 1912 0568 00       		.byte	0
+ 1913 0569 00       		.byte	0
+ARM GAS  C:\Users\brenn\AppData\Local\Temp\ccOzUpww.s 			page 40
+
+
+ 1914 056a 0D       		.uleb128 0xd
+ 1915 056b 2D060000 		.4byte	.LASF46
+ 1916 056f 01       		.byte	0x1
+ 1917 0570 B2       		.byte	0xb2
+ 1918 0571 00000000 		.4byte	.LFB80
+ 1919 0575 40000000 		.4byte	.LFE80-.LFB80
+ 1920 0579 01       		.uleb128 0x1
+ 1921 057a 9C       		.byte	0x9c
+ 1922 057b 1B060000 		.4byte	0x61b
+ 1923 057f 0C       		.uleb128 0xc
+ 1924 0580 06000000 		.4byte	.LVL72
+ 1925 0584 10030000 		.4byte	0x310
+ 1926 0588 0E       		.uleb128 0xe
+ 1927 0589 0C000000 		.4byte	.LVL73
+ 1928 058d A7030000 		.4byte	0x3a7
+ 1929 0591 9B050000 		.4byte	0x59b
+ 1930 0595 0F       		.uleb128 0xf
+ 1931 0596 01       		.uleb128 0x1
+ 1932 0597 50       		.byte	0x50
+ 1933 0598 01       		.uleb128 0x1
+ 1934 0599 31       		.byte	0x31
+ 1935 059a 00       		.byte	0
+ 1936 059b 0E       		.uleb128 0xe
+ 1937 059c 12000000 		.4byte	.LVL74
+ 1938 05a0 F0030000 		.4byte	0x3f0
+ 1939 05a4 B2050000 		.4byte	0x5b2
+ 1940 05a8 0F       		.uleb128 0xf
+ 1941 05a9 01       		.uleb128 0x1
+ 1942 05aa 50       		.byte	0x50
+ 1943 05ab 05       		.uleb128 0x5
+ 1944 05ac 03       		.byte	0x3
+ 1945 05ad 10000000 		.4byte	.LC2
+ 1946 05b1 00       		.byte	0
+ 1947 05b2 0E       		.uleb128 0xe
+ 1948 05b3 1C000000 		.4byte	.LVL75
+ 1949 05b7 67010000 		.4byte	0x167
+ 1950 05bb D3050000 		.4byte	0x5d3
+ 1951 05bf 0F       		.uleb128 0xf
+ 1952 05c0 01       		.uleb128 0x1
+ 1953 05c1 50       		.byte	0x50
+ 1954 05c2 05       		.uleb128 0x5
+ 1955 05c3 03       		.byte	0x3
+ 1956 05c4 18000000 		.4byte	.LC3
+ 1957 05c8 0F       		.uleb128 0xf
+ 1958 05c9 01       		.uleb128 0x1
+ 1959 05ca 51       		.byte	0x51
+ 1960 05cb 01       		.uleb128 0x1
+ 1961 05cc 30       		.byte	0x30
+ 1962 05cd 0F       		.uleb128 0xf
+ 1963 05ce 01       		.uleb128 0x1
+ 1964 05cf 52       		.byte	0x52
+ 1965 05d0 01       		.uleb128 0x1
+ 1966 05d1 30       		.byte	0x30
+ 1967 05d2 00       		.byte	0
+ 1968 05d3 0C       		.uleb128 0xc
+ 1969 05d4 20000000 		.4byte	.LVL76
+ 1970 05d8 6B040000 		.4byte	0x46b
+ARM GAS  C:\Users\brenn\AppData\Local\Temp\ccOzUpww.s 			page 41
+
+
+ 1971 05dc 0E       		.uleb128 0xe
+ 1972 05dd 26000000 		.4byte	.LVL77
+ 1973 05e1 4C0A0000 		.4byte	0xa4c
+ 1974 05e5 EF050000 		.4byte	0x5ef
+ 1975 05e9 0F       		.uleb128 0xf
+ 1976 05ea 01       		.uleb128 0x1
+ 1977 05eb 50       		.byte	0x50
+ 1978 05ec 01       		.uleb128 0x1
+ 1979 05ed 4E       		.byte	0x4e
+ 1980 05ee 00       		.byte	0
+ 1981 05ef 0C       		.uleb128 0xc
+ 1982 05f0 2A000000 		.4byte	.LVL78
+ 1983 05f4 37030000 		.4byte	0x337
+ 1984 05f8 0E       		.uleb128 0xe
+ 1985 05f9 30000000 		.4byte	.LVL79
+ 1986 05fd A7030000 		.4byte	0x3a7
+ 1987 0601 0B060000 		.4byte	0x60b
+ 1988 0605 0F       		.uleb128 0xf
+ 1989 0606 01       		.uleb128 0x1
+ 1990 0607 50       		.byte	0x50
+ 1991 0608 01       		.uleb128 0x1
+ 1992 0609 30       		.byte	0x30
+ 1993 060a 00       		.byte	0
+ 1994 060b 10       		.uleb128 0x10
+ 1995 060c 36000000 		.4byte	.LVL80
+ 1996 0610 AF0A0000 		.4byte	0xaaf
+ 1997 0614 0F       		.uleb128 0xf
+ 1998 0615 01       		.uleb128 0x1
+ 1999 0616 50       		.byte	0x50
+ 2000 0617 01       		.uleb128 0x1
+ 2001 0618 31       		.byte	0x31
+ 2002 0619 00       		.byte	0
+ 2003 061a 00       		.byte	0
+ 2004 061b 11       		.uleb128 0x11
+ 2005 061c 3D000000 		.4byte	.LASF47
+ 2006 0620 01       		.byte	0x1
+ 2007 0621 CC       		.byte	0xcc
+ 2008 0622 00000000 		.4byte	.LFB83
+ 2009 0626 C8000000 		.4byte	.LFE83-.LFB83
+ 2010 062a 01       		.uleb128 0x1
+ 2011 062b 9C       		.byte	0x9c
+ 2012 062c 14070000 		.4byte	0x714
+ 2013 0630 12       		.uleb128 0x12
+ 2014 0631 9D030000 		.4byte	.LASF48
+ 2015 0635 01       		.byte	0x1
+ 2016 0636 CD       		.byte	0xcd
+ 2017 0637 AF000000 		.4byte	0xaf
+ 2018 063b C1010000 		.4byte	.LLST13
+ 2019 063f 0C       		.uleb128 0xc
+ 2020 0640 06000000 		.4byte	.LVL81
+ 2021 0644 BA0A0000 		.4byte	0xaba
+ 2022 0648 0E       		.uleb128 0xe
+ 2023 0649 16000000 		.4byte	.LVL84
+ 2024 064d 2B0A0000 		.4byte	0xa2b
+ 2025 0651 60060000 		.4byte	0x660
+ 2026 0655 0F       		.uleb128 0xf
+ 2027 0656 01       		.uleb128 0x1
+ARM GAS  C:\Users\brenn\AppData\Local\Temp\ccOzUpww.s 			page 42
+
+
+ 2028 0657 50       		.byte	0x50
+ 2029 0658 01       		.uleb128 0x1
+ 2030 0659 31       		.byte	0x31
+ 2031 065a 0F       		.uleb128 0xf
+ 2032 065b 01       		.uleb128 0x1
+ 2033 065c 51       		.byte	0x51
+ 2034 065d 01       		.uleb128 0x1
+ 2035 065e 30       		.byte	0x30
+ 2036 065f 00       		.byte	0
+ 2037 0660 0E       		.uleb128 0xe
+ 2038 0661 1C000000 		.4byte	.LVL85
+ 2039 0665 360A0000 		.4byte	0xa36
+ 2040 0669 77060000 		.4byte	0x677
+ 2041 066d 0F       		.uleb128 0xf
+ 2042 066e 01       		.uleb128 0x1
+ 2043 066f 50       		.byte	0x50
+ 2044 0670 05       		.uleb128 0x5
+ 2045 0671 03       		.byte	0x3
+ 2046 0672 20000000 		.4byte	.LC4
+ 2047 0676 00       		.byte	0
+ 2048 0677 0C       		.uleb128 0xc
+ 2049 0678 2C000000 		.4byte	.LVL86
+ 2050 067c C50A0000 		.4byte	0xac5
+ 2051 0680 0E       		.uleb128 0xe
+ 2052 0681 46000000 		.4byte	.LVL87
+ 2053 0685 8E0A0000 		.4byte	0xa8e
+ 2054 0689 97060000 		.4byte	0x697
+ 2055 068d 0F       		.uleb128 0xf
+ 2056 068e 01       		.uleb128 0x1
+ 2057 068f 50       		.byte	0x50
+ 2058 0690 05       		.uleb128 0x5
+ 2059 0691 03       		.byte	0x3
+ 2060 0692 2C000000 		.4byte	.LC5
+ 2061 0696 00       		.byte	0
+ 2062 0697 0C       		.uleb128 0xc
+ 2063 0698 4E000000 		.4byte	.LVL88
+ 2064 069c D00A0000 		.4byte	0xad0
+ 2065 06a0 0E       		.uleb128 0xe
+ 2066 06a1 54000000 		.4byte	.LVL89
+ 2067 06a5 8E0A0000 		.4byte	0xa8e
+ 2068 06a9 B7060000 		.4byte	0x6b7
+ 2069 06ad 0F       		.uleb128 0xf
+ 2070 06ae 01       		.uleb128 0x1
+ 2071 06af 50       		.byte	0x50
+ 2072 06b0 05       		.uleb128 0x5
+ 2073 06b1 03       		.byte	0x3
+ 2074 06b2 38000000 		.4byte	.LC6
+ 2075 06b6 00       		.byte	0
+ 2076 06b7 0E       		.uleb128 0xe
+ 2077 06b8 7E000000 		.4byte	.LVL90
+ 2078 06bc DB0A0000 		.4byte	0xadb
+ 2079 06c0 DC060000 		.4byte	0x6dc
+ 2080 06c4 0F       		.uleb128 0xf
+ 2081 06c5 01       		.uleb128 0x1
+ 2082 06c6 50       		.byte	0x50
+ 2083 06c7 05       		.uleb128 0x5
+ 2084 06c8 03       		.byte	0x3
+ARM GAS  C:\Users\brenn\AppData\Local\Temp\ccOzUpww.s 			page 43
+
+
+ 2085 06c9 00000000 		.4byte	uart_rx_data
+ 2086 06cd 0F       		.uleb128 0xf
+ 2087 06ce 01       		.uleb128 0x1
+ 2088 06cf 51       		.byte	0x51
+ 2089 06d0 05       		.uleb128 0x5
+ 2090 06d1 03       		.byte	0x3
+ 2091 06d2 3C000000 		.4byte	.LC7
+ 2092 06d6 0F       		.uleb128 0xf
+ 2093 06d7 01       		.uleb128 0x1
+ 2094 06d8 52       		.byte	0x52
+ 2095 06d9 01       		.uleb128 0x1
+ 2096 06da 34       		.byte	0x34
+ 2097 06db 00       		.byte	0
+ 2098 06dc 0C       		.uleb128 0xc
+ 2099 06dd 84000000 		.4byte	.LVL91
+ 2100 06e1 B0040000 		.4byte	0x4b0
+ 2101 06e5 0E       		.uleb128 0xe
+ 2102 06e6 8E000000 		.4byte	.LVL92
+ 2103 06ea DB0A0000 		.4byte	0xadb
+ 2104 06ee 0A070000 		.4byte	0x70a
+ 2105 06f2 0F       		.uleb128 0xf
+ 2106 06f3 01       		.uleb128 0x1
+ 2107 06f4 50       		.byte	0x50
+ 2108 06f5 05       		.uleb128 0x5
+ 2109 06f6 03       		.byte	0x3
+ 2110 06f7 00000000 		.4byte	uart_rx_data
+ 2111 06fb 0F       		.uleb128 0xf
+ 2112 06fc 01       		.uleb128 0x1
+ 2113 06fd 51       		.byte	0x51
+ 2114 06fe 05       		.uleb128 0x5
+ 2115 06ff 03       		.byte	0x3
+ 2116 0700 44000000 		.4byte	.LC8
+ 2117 0704 0F       		.uleb128 0xf
+ 2118 0705 01       		.uleb128 0x1
+ 2119 0706 52       		.byte	0x52
+ 2120 0707 01       		.uleb128 0x1
+ 2121 0708 34       		.byte	0x34
+ 2122 0709 00       		.byte	0
+ 2123 070a 0C       		.uleb128 0xc
+ 2124 070b 94000000 		.4byte	.LVL93
+ 2125 070f 6A050000 		.4byte	0x56a
+ 2126 0713 00       		.byte	0
+ 2127 0714 0D       		.uleb128 0xd
+ 2128 0715 FA010000 		.4byte	.LASF49
+ 2129 0719 01       		.byte	0x1
+ 2130 071a BE       		.byte	0xbe
+ 2131 071b 00000000 		.4byte	.LFB81
+ 2132 071f 14000000 		.4byte	.LFE81-.LFB81
+ 2133 0723 01       		.uleb128 0x1
+ 2134 0724 9C       		.byte	0x9c
+ 2135 0725 33070000 		.4byte	0x733
+ 2136 0729 0C       		.uleb128 0xc
+ 2137 072a 0C000000 		.4byte	.LVL94
+ 2138 072e E60A0000 		.4byte	0xae6
+ 2139 0732 00       		.byte	0
+ 2140 0733 0D       		.uleb128 0xd
+ 2141 0734 73010000 		.4byte	.LASF50
+ARM GAS  C:\Users\brenn\AppData\Local\Temp\ccOzUpww.s 			page 44
+
+
+ 2142 0738 01       		.byte	0x1
+ 2143 0739 C4       		.byte	0xc4
+ 2144 073a 00000000 		.4byte	.LFB82
+ 2145 073e 2C000000 		.4byte	.LFE82-.LFB82
+ 2146 0742 01       		.uleb128 0x1
+ 2147 0743 9C       		.byte	0x9c
+ 2148 0744 80070000 		.4byte	0x780
+ 2149 0748 0E       		.uleb128 0xe
+ 2150 0749 14000000 		.4byte	.LVL95
+ 2151 074d F10A0000 		.4byte	0xaf1
+ 2152 0751 65070000 		.4byte	0x765
+ 2153 0755 0F       		.uleb128 0xf
+ 2154 0756 01       		.uleb128 0x1
+ 2155 0757 50       		.byte	0x50
+ 2156 0758 02       		.uleb128 0x2
+ 2157 0759 74       		.byte	0x74
+ 2158 075a 00       		.sleb128 0
+ 2159 075b 0F       		.uleb128 0xf
+ 2160 075c 01       		.uleb128 0x1
+ 2161 075d 51       		.byte	0x51
+ 2162 075e 05       		.uleb128 0x5
+ 2163 075f 03       		.byte	0x3
+ 2164 0760 4C000000 		.4byte	.LC9
+ 2165 0764 00       		.byte	0
+ 2166 0765 10       		.uleb128 0x10
+ 2167 0766 1E000000 		.4byte	.LVL96
+ 2168 076a 67010000 		.4byte	0x167
+ 2169 076e 0F       		.uleb128 0xf
+ 2170 076f 01       		.uleb128 0x1
+ 2171 0770 50       		.byte	0x50
+ 2172 0771 02       		.uleb128 0x2
+ 2173 0772 74       		.byte	0x74
+ 2174 0773 00       		.sleb128 0
+ 2175 0774 0F       		.uleb128 0xf
+ 2176 0775 01       		.uleb128 0x1
+ 2177 0776 51       		.byte	0x51
+ 2178 0777 01       		.uleb128 0x1
+ 2179 0778 31       		.byte	0x31
+ 2180 0779 0F       		.uleb128 0xf
+ 2181 077a 01       		.uleb128 0x1
+ 2182 077b 52       		.byte	0x52
+ 2183 077c 01       		.uleb128 0x1
+ 2184 077d 30       		.byte	0x30
+ 2185 077e 00       		.byte	0
+ 2186 077f 00       		.byte	0
+ 2187 0780 11       		.uleb128 0x11
+ 2188 0781 24040000 		.4byte	.LASF51
+ 2189 0785 01       		.byte	0x1
+ 2190 0786 F4       		.byte	0xf4
+ 2191 0787 00000000 		.4byte	.LFB84
+ 2192 078b 0C000000 		.4byte	.LFE84-.LFB84
+ 2193 078f 01       		.uleb128 0x1
+ 2194 0790 9C       		.byte	0x9c
+ 2195 0791 A8070000 		.4byte	0x7a8
+ 2196 0795 0C       		.uleb128 0xc
+ 2197 0796 06000000 		.4byte	.LVL97
+ 2198 079a 33070000 		.4byte	0x733
+ARM GAS  C:\Users\brenn\AppData\Local\Temp\ccOzUpww.s 			page 45
+
+
+ 2199 079e 0C       		.uleb128 0xc
+ 2200 079f 0A000000 		.4byte	.LVL98
+ 2201 07a3 FC0A0000 		.4byte	0xafc
+ 2202 07a7 00       		.byte	0
+ 2203 07a8 16       		.uleb128 0x16
+ 2204 07a9 BA000000 		.4byte	.LASF105
+ 2205 07ad 01       		.byte	0x1
+ 2206 07ae F9       		.byte	0xf9
+ 2207 07af 25000000 		.4byte	0x25
+ 2208 07b3 00000000 		.4byte	.LFB85
+ 2209 07b7 AC000000 		.4byte	.LFE85-.LFB85
+ 2210 07bb 01       		.uleb128 0x1
+ 2211 07bc 9C       		.byte	0x9c
+ 2212 07bd FD080000 		.4byte	0x8fd
+ 2213 07c1 0E       		.uleb128 0xe
+ 2214 07c2 0A000000 		.4byte	.LVL99
+ 2215 07c6 070B0000 		.4byte	0xb07
+ 2216 07ca D8070000 		.4byte	0x7d8
+ 2217 07ce 0F       		.uleb128 0xf
+ 2218 07cf 01       		.uleb128 0x1
+ 2219 07d0 50       		.byte	0x50
+ 2220 07d1 05       		.uleb128 0x5
+ 2221 07d2 03       		.byte	0x3
+ 2222 07d3 00000000 		.4byte	RX_ISR_Handler
+ 2223 07d7 00       		.byte	0
+ 2224 07d8 0C       		.uleb128 0xc
+ 2225 07d9 0E000000 		.4byte	.LVL100
+ 2226 07dd 120B0000 		.4byte	0xb12
+ 2227 07e1 0E       		.uleb128 0xe
+ 2228 07e2 14000000 		.4byte	.LVL101
+ 2229 07e6 1D0B0000 		.4byte	0xb1d
+ 2230 07ea F8070000 		.4byte	0x7f8
+ 2231 07ee 0F       		.uleb128 0xf
+ 2232 07ef 01       		.uleb128 0x1
+ 2233 07f0 50       		.byte	0x50
+ 2234 07f1 05       		.uleb128 0x5
+ 2235 07f2 03       		.byte	0x3
+ 2236 07f3 00000000 		.4byte	Timer_ISR_Handler
+ 2237 07f7 00       		.byte	0
+ 2238 07f8 0C       		.uleb128 0xc
+ 2239 07f9 18000000 		.4byte	.LVL102
+ 2240 07fd 280B0000 		.4byte	0xb28
+ 2241 0801 0C       		.uleb128 0xc
+ 2242 0802 1C000000 		.4byte	.LVL103
+ 2243 0806 330B0000 		.4byte	0xb33
+ 2244 080a 0C       		.uleb128 0xc
+ 2245 080b 20000000 		.4byte	.LVL104
+ 2246 080f 3E0B0000 		.4byte	0xb3e
+ 2247 0813 0C       		.uleb128 0xc
+ 2248 0814 24000000 		.4byte	.LVL105
+ 2249 0818 490B0000 		.4byte	0xb49
+ 2250 081c 0C       		.uleb128 0xc
+ 2251 081d 28000000 		.4byte	.LVL106
+ 2252 0821 540B0000 		.4byte	0xb54
+ 2253 0825 0C       		.uleb128 0xc
+ 2254 0826 2C000000 		.4byte	.LVL107
+ 2255 082a 5F0B0000 		.4byte	0xb5f
+ARM GAS  C:\Users\brenn\AppData\Local\Temp\ccOzUpww.s 			page 46
+
+
+ 2256 082e 0C       		.uleb128 0xc
+ 2257 082f 30000000 		.4byte	.LVL108
+ 2258 0833 6A0B0000 		.4byte	0xb6a
+ 2259 0837 0C       		.uleb128 0xc
+ 2260 0838 34000000 		.4byte	.LVL109
+ 2261 083c 750B0000 		.4byte	0xb75
+ 2262 0840 0E       		.uleb128 0xe
+ 2263 0841 3C000000 		.4byte	.LVL110
+ 2264 0845 D1000000 		.4byte	0xd1
+ 2265 0849 5C080000 		.4byte	0x85c
+ 2266 084d 0F       		.uleb128 0xf
+ 2267 084e 01       		.uleb128 0x1
+ 2268 084f 50       		.byte	0x50
+ 2269 0850 05       		.uleb128 0x5
+ 2270 0851 03       		.byte	0x3
+ 2271 0852 00000000 		.4byte	jump_audio_vector
+ 2272 0856 0F       		.uleb128 0xf
+ 2273 0857 01       		.uleb128 0x1
+ 2274 0858 51       		.byte	0x51
+ 2275 0859 01       		.uleb128 0x1
+ 2276 085a 30       		.byte	0x30
+ 2277 085b 00       		.byte	0
+ 2278 085c 0E       		.uleb128 0xe
+ 2279 085d 44000000 		.4byte	.LVL111
+ 2280 0861 D1000000 		.4byte	0xd1
+ 2281 0865 78080000 		.4byte	0x878
+ 2282 0869 0F       		.uleb128 0xf
+ 2283 086a 01       		.uleb128 0x1
+ 2284 086b 50       		.byte	0x50
+ 2285 086c 05       		.uleb128 0x5
+ 2286 086d 03       		.byte	0x3
+ 2287 086e 00000000 		.4byte	duck_audio_vector
+ 2288 0872 0F       		.uleb128 0xf
+ 2289 0873 01       		.uleb128 0x1
+ 2290 0874 51       		.byte	0x51
+ 2291 0875 01       		.uleb128 0x1
+ 2292 0876 31       		.byte	0x31
+ 2293 0877 00       		.byte	0
+ 2294 0878 0C       		.uleb128 0xc
+ 2295 0879 48000000 		.4byte	.LVL112
+ 2296 087d 2B010000 		.4byte	0x12b
+ 2297 0881 0C       		.uleb128 0xc
+ 2298 0882 52000000 		.4byte	.LVL113
+ 2299 0886 E60A0000 		.4byte	0xae6
+ 2300 088a 0C       		.uleb128 0xc
+ 2301 088b 56000000 		.4byte	.LVL114
+ 2302 088f DB010000 		.4byte	0x1db
+ 2303 0893 0C       		.uleb128 0xc
+ 2304 0894 5A000000 		.4byte	.LVL115
+ 2305 0898 800B0000 		.4byte	0xb80
+ 2306 089c 0C       		.uleb128 0xc
+ 2307 089d 60000000 		.4byte	.LVL116
+ 2308 08a1 8B0B0000 		.4byte	0xb8b
+ 2309 08a5 0C       		.uleb128 0xc
+ 2310 08a6 68000000 		.4byte	.LVL117
+ 2311 08aa 6D020000 		.4byte	0x26d
+ 2312 08ae 0C       		.uleb128 0xc
+ARM GAS  C:\Users\brenn\AppData\Local\Temp\ccOzUpww.s 			page 47
+
+
+ 2313 08af 6E000000 		.4byte	.LVL118
+ 2314 08b3 B0040000 		.4byte	0x4b0
+ 2315 08b7 0C       		.uleb128 0xc
+ 2316 08b8 72000000 		.4byte	.LVL119
+ 2317 08bc 960B0000 		.4byte	0xb96
+ 2318 08c0 0C       		.uleb128 0xc
+ 2319 08c1 78000000 		.4byte	.LVL120
+ 2320 08c5 8B0B0000 		.4byte	0xb8b
+ 2321 08c9 0C       		.uleb128 0xc
+ 2322 08ca 80000000 		.4byte	.LVL121
+ 2323 08ce 9B020000 		.4byte	0x29b
+ 2324 08d2 0C       		.uleb128 0xc
+ 2325 08d3 86000000 		.4byte	.LVL122
+ 2326 08d7 6A050000 		.4byte	0x56a
+ 2327 08db 0C       		.uleb128 0xc
+ 2328 08dc 8A000000 		.4byte	.LVL123
+ 2329 08e0 A10B0000 		.4byte	0xba1
+ 2330 08e4 0C       		.uleb128 0xc
+ 2331 08e5 90000000 		.4byte	.LVL124
+ 2332 08e9 14070000 		.4byte	0x714
+ 2333 08ed 10       		.uleb128 0x10
+ 2334 08ee 96000000 		.4byte	.LVL125
+ 2335 08f2 4C0A0000 		.4byte	0xa4c
+ 2336 08f6 0F       		.uleb128 0xf
+ 2337 08f7 01       		.uleb128 0x1
+ 2338 08f8 50       		.byte	0x50
+ 2339 08f9 01       		.uleb128 0x1
+ 2340 08fa 3A       		.byte	0x3a
+ 2341 08fb 00       		.byte	0
+ 2342 08fc 00       		.byte	0
+ 2343 08fd 17       		.uleb128 0x17
+ 2344 08fe 7E050000 		.4byte	.LASF52
+ 2345 0902 05       		.byte	0x5
+ 2346 0903 1207     		.2byte	0x712
+ 2347 0905 09090000 		.4byte	0x909
+ 2348 0909 18       		.uleb128 0x18
+ 2349 090a BA000000 		.4byte	0xba
+ 2350 090e 19       		.uleb128 0x19
+ 2351 090f 4E030000 		.4byte	.LASF53
+ 2352 0913 01       		.byte	0x1
+ 2353 0914 33       		.byte	0x33
+ 2354 0915 8F000000 		.4byte	0x8f
+ 2355 0919 05       		.uleb128 0x5
+ 2356 091a 03       		.byte	0x3
+ 2357 091b 00000000 		.4byte	uart_rx_buffer
+ 2358 091f 1A       		.uleb128 0x1a
+ 2359 0920 8F000000 		.4byte	0x8f
+ 2360 0924 2F090000 		.4byte	0x92f
+ 2361 0928 1B       		.uleb128 0x1b
+ 2362 0929 88000000 		.4byte	0x88
+ 2363 092d 04       		.byte	0x4
+ 2364 092e 00       		.byte	0
+ 2365 092f 19       		.uleb128 0x19
+ 2366 0930 55050000 		.4byte	.LASF54
+ 2367 0934 01       		.byte	0x1
+ 2368 0935 34       		.byte	0x34
+ 2369 0936 1F090000 		.4byte	0x91f
+ARM GAS  C:\Users\brenn\AppData\Local\Temp\ccOzUpww.s 			page 48
+
+
+ 2370 093a 05       		.uleb128 0x5
+ 2371 093b 03       		.byte	0x3
+ 2372 093c 00000000 		.4byte	uart_rx_data
+ 2373 0940 1A       		.uleb128 0x1a
+ 2374 0941 8F000000 		.4byte	0x8f
+ 2375 0945 50090000 		.4byte	0x950
+ 2376 0949 1B       		.uleb128 0x1b
+ 2377 094a 88000000 		.4byte	0x88
+ 2378 094e 1F       		.byte	0x1f
+ 2379 094f 00       		.byte	0
+ 2380 0950 19       		.uleb128 0x19
+ 2381 0951 87010000 		.4byte	.LASF55
+ 2382 0955 01       		.byte	0x1
+ 2383 0956 35       		.byte	0x35
+ 2384 0957 40090000 		.4byte	0x940
+ 2385 095b 05       		.uleb128 0x5
+ 2386 095c 03       		.byte	0x3
+ 2387 095d 00000000 		.4byte	score_message
+ 2388 0961 19       		.uleb128 0x19
+ 2389 0962 49010000 		.4byte	.LASF56
+ 2390 0966 01       		.byte	0x1
+ 2391 0967 36       		.byte	0x36
+ 2392 0968 25000000 		.4byte	0x25
+ 2393 096c 05       		.uleb128 0x5
+ 2394 096d 03       		.byte	0x3
+ 2395 096e 00000000 		.4byte	uart_rx_counter
+ 2396 0972 19       		.uleb128 0x19
+ 2397 0973 5D030000 		.4byte	.LASF57
+ 2398 0977 01       		.byte	0x1
+ 2399 0978 37       		.byte	0x37
+ 2400 0979 25000000 		.4byte	0x25
+ 2401 097d 05       		.uleb128 0x5
+ 2402 097e 03       		.byte	0x3
+ 2403 097f 00000000 		.4byte	speed
+ 2404 0983 19       		.uleb128 0x19
+ 2405 0984 D1020000 		.4byte	.LASF58
+ 2406 0988 01       		.byte	0x1
+ 2407 0989 38       		.byte	0x38
+ 2408 098a 25000000 		.4byte	0x25
+ 2409 098e 05       		.uleb128 0x5
+ 2410 098f 03       		.byte	0x3
+ 2411 0990 00000000 		.4byte	score
+ 2412 0994 19       		.uleb128 0x19
+ 2413 0995 C1040000 		.4byte	.LASF59
+ 2414 0999 01       		.byte	0x1
+ 2415 099a 39       		.byte	0x39
+ 2416 099b 25000000 		.4byte	0x25
+ 2417 099f 05       		.uleb128 0x5
+ 2418 09a0 03       		.byte	0x3
+ 2419 09a1 00000000 		.4byte	count
+ 2420 09a5 1A       		.uleb128 0x1a
+ 2421 09a6 A8000000 		.4byte	0xa8
+ 2422 09aa B5090000 		.4byte	0x9b5
+ 2423 09ae 1B       		.uleb128 0x1b
+ 2424 09af 88000000 		.4byte	0x88
+ 2425 09b3 63       		.byte	0x63
+ 2426 09b4 00       		.byte	0
+ARM GAS  C:\Users\brenn\AppData\Local\Temp\ccOzUpww.s 			page 49
+
+
+ 2427 09b5 19       		.uleb128 0x19
+ 2428 09b6 1E010000 		.4byte	.LASF60
+ 2429 09ba 01       		.byte	0x1
+ 2430 09bb 3A       		.byte	0x3a
+ 2431 09bc A5090000 		.4byte	0x9a5
+ 2432 09c0 05       		.uleb128 0x5
+ 2433 09c1 03       		.byte	0x3
+ 2434 09c2 00000000 		.4byte	jump_audio_vector
+ 2435 09c6 19       		.uleb128 0x19
+ 2436 09c7 E0030000 		.4byte	.LASF61
+ 2437 09cb 01       		.byte	0x1
+ 2438 09cc 3B       		.byte	0x3b
+ 2439 09cd A5090000 		.4byte	0x9a5
+ 2440 09d1 05       		.uleb128 0x5
+ 2441 09d2 03       		.byte	0x3
+ 2442 09d3 00000000 		.4byte	duck_audio_vector
+ 2443 09d7 19       		.uleb128 0x19
+ 2444 09d8 9D000000 		.4byte	.LASF62
+ 2445 09dc 01       		.byte	0x1
+ 2446 09dd 3C       		.byte	0x3c
+ 2447 09de 94020000 		.4byte	0x294
+ 2448 09e2 05       		.uleb128 0x5
+ 2449 09e3 03       		.byte	0x3
+ 2450 09e4 00000000 		.4byte	is_running
+ 2451 09e8 19       		.uleb128 0x19
+ 2452 09e9 63030000 		.4byte	.LASF63
+ 2453 09ed 01       		.byte	0x1
+ 2454 09ee 3D       		.byte	0x3d
+ 2455 09ef 94020000 		.4byte	0x294
+ 2456 09f3 05       		.uleb128 0x5
+ 2457 09f4 03       		.byte	0x3
+ 2458 09f5 00000000 		.4byte	is_ground_obstacle_detected
+ 2459 09f9 19       		.uleb128 0x19
+ 2460 09fa F2030000 		.4byte	.LASF64
+ 2461 09fe 01       		.byte	0x1
+ 2462 09ff 3E       		.byte	0x3e
+ 2463 0a00 94020000 		.4byte	0x294
+ 2464 0a04 05       		.uleb128 0x5
+ 2465 0a05 03       		.byte	0x3
+ 2466 0a06 00000000 		.4byte	is_flying_obstacle_detected
+ 2467 0a0a 1C       		.uleb128 0x1c
+ 2468 0a0b 73696E00 		.ascii	"sin\000"
+ 2469 0a0f 73696E00 		.ascii	"sin\000"
+ 2470 0a13 1B       		.byte	0x1b
+ 2471 0a14 6F       		.byte	0x6f
+ 2472 0a15 1D       		.uleb128 0x1d
+ 2473 0a16 CC010000 		.4byte	.LASF65
+ 2474 0a1a CC010000 		.4byte	.LASF65
+ 2475 0a1e 06       		.byte	0x6
+ 2476 0a1f C7       		.byte	0xc7
+ 2477 0a20 1D       		.uleb128 0x1d
+ 2478 0a21 DE010000 		.4byte	.LASF66
+ 2479 0a25 DE010000 		.4byte	.LASF66
+ 2480 0a29 06       		.byte	0x6
+ 2481 0a2a CA       		.byte	0xca
+ 2482 0a2b 1D       		.uleb128 0x1d
+ 2483 0a2c 27050000 		.4byte	.LASF67
+ARM GAS  C:\Users\brenn\AppData\Local\Temp\ccOzUpww.s 			page 50
+
+
+ 2484 0a30 27050000 		.4byte	.LASF67
+ 2485 0a34 07       		.byte	0x7
+ 2486 0a35 3D       		.byte	0x3d
+ 2487 0a36 1D       		.uleb128 0x1d
+ 2488 0a37 20030000 		.4byte	.LASF68
+ 2489 0a3b 20030000 		.4byte	.LASF68
+ 2490 0a3f 07       		.byte	0x7
+ 2491 0a40 3C       		.byte	0x3c
+ 2492 0a41 1D       		.uleb128 0x1d
+ 2493 0a42 9B010000 		.4byte	.LASF69
+ 2494 0a46 9B010000 		.4byte	.LASF69
+ 2495 0a4a 08       		.byte	0x8
+ 2496 0a4b 57       		.byte	0x57
+ 2497 0a4c 1D       		.uleb128 0x1d
+ 2498 0a4d 19060000 		.4byte	.LASF70
+ 2499 0a51 19060000 		.4byte	.LASF70
+ 2500 0a55 09       		.byte	0x9
+ 2501 0a56 76       		.byte	0x76
+ 2502 0a57 1D       		.uleb128 0x1d
+ 2503 0a58 61000000 		.4byte	.LASF71
+ 2504 0a5c 61000000 		.4byte	.LASF71
+ 2505 0a60 0A       		.byte	0xa
+ 2506 0a61 56       		.byte	0x56
+ 2507 0a62 1D       		.uleb128 0x1d
+ 2508 0a63 37060000 		.4byte	.LASF72
+ 2509 0a67 37060000 		.4byte	.LASF72
+ 2510 0a6b 0B       		.byte	0xb
+ 2511 0a6c 26       		.byte	0x26
+ 2512 0a6d 1D       		.uleb128 0x1d
+ 2513 0a6e 1B050000 		.4byte	.LASF73
+ 2514 0a72 1B050000 		.4byte	.LASF73
+ 2515 0a76 0C       		.byte	0xc
+ 2516 0a77 26       		.byte	0x26
+ 2517 0a78 1D       		.uleb128 0x1d
+ 2518 0a79 32020000 		.4byte	.LASF74
+ 2519 0a7d 32020000 		.4byte	.LASF74
+ 2520 0a81 0D       		.byte	0xd
+ 2521 0a82 26       		.byte	0x26
+ 2522 0a83 1D       		.uleb128 0x1d
+ 2523 0a84 21060000 		.4byte	.LASF75
+ 2524 0a88 21060000 		.4byte	.LASF75
+ 2525 0a8c 0E       		.byte	0xe
+ 2526 0a8d 26       		.byte	0x26
+ 2527 0a8e 1D       		.uleb128 0x1d
+ 2528 0a8f FD000000 		.4byte	.LASF76
+ 2529 0a93 FD000000 		.4byte	.LASF76
+ 2530 0a97 0F       		.byte	0xf
+ 2531 0a98 8B       		.byte	0x8b
+ 2532 0a99 1D       		.uleb128 0x1d
+ 2533 0a9a 6C000000 		.4byte	.LASF77
+ 2534 0a9e 6C000000 		.4byte	.LASF77
+ 2535 0aa2 10       		.byte	0x10
+ 2536 0aa3 37       		.byte	0x37
+ 2537 0aa4 1D       		.uleb128 0x1d
+ 2538 0aa5 17020000 		.4byte	.LASF78
+ 2539 0aa9 17020000 		.4byte	.LASF78
+ 2540 0aad 11       		.byte	0x11
+ARM GAS  C:\Users\brenn\AppData\Local\Temp\ccOzUpww.s 			page 51
+
+
+ 2541 0aae 23       		.byte	0x23
+ 2542 0aaf 1D       		.uleb128 0x1d
+ 2543 0ab0 EE040000 		.4byte	.LASF79
+ 2544 0ab4 EE040000 		.4byte	.LASF79
+ 2545 0ab8 07       		.byte	0x7
+ 2546 0ab9 3A       		.byte	0x3a
+ 2547 0aba 1D       		.uleb128 0x1d
+ 2548 0abb A8000000 		.4byte	.LASF80
+ 2549 0abf A8000000 		.4byte	.LASF80
+ 2550 0ac3 0F       		.byte	0xf
+ 2551 0ac4 70       		.byte	0x70
+ 2552 0ac5 1D       		.uleb128 0x1d
+ 2553 0ac6 8C020000 		.4byte	.LASF81
+ 2554 0aca 8C020000 		.4byte	.LASF81
+ 2555 0ace 0F       		.byte	0xf
+ 2556 0acf 6F       		.byte	0x6f
+ 2557 0ad0 1D       		.uleb128 0x1d
+ 2558 0ad1 43060000 		.4byte	.LASF82
+ 2559 0ad5 43060000 		.4byte	.LASF82
+ 2560 0ad9 0F       		.byte	0xf
+ 2561 0ada 8A       		.byte	0x8a
+ 2562 0adb 1D       		.uleb128 0x1d
+ 2563 0adc DD000000 		.4byte	.LASF83
+ 2564 0ae0 DD000000 		.4byte	.LASF83
+ 2565 0ae4 12       		.byte	0x12
+ 2566 0ae5 23       		.byte	0x23
+ 2567 0ae6 1D       		.uleb128 0x1d
+ 2568 0ae7 4B020000 		.4byte	.LASF84
+ 2569 0aeb 4B020000 		.4byte	.LASF84
+ 2570 0aef 11       		.byte	0x11
+ 2571 0af0 25       		.byte	0x25
+ 2572 0af1 1D       		.uleb128 0x1d
+ 2573 0af2 9C020000 		.4byte	.LASF85
+ 2574 0af6 9C020000 		.4byte	.LASF85
+ 2575 0afa 13       		.byte	0x13
+ 2576 0afb E7       		.byte	0xe7
+ 2577 0afc 1D       		.uleb128 0x1d
+ 2578 0afd BC030000 		.4byte	.LASF86
+ 2579 0b01 BC030000 		.4byte	.LASF86
+ 2580 0b05 14       		.byte	0x14
+ 2581 0b06 5E       		.byte	0x5e
+ 2582 0b07 1D       		.uleb128 0x1d
+ 2583 0b08 04030000 		.4byte	.LASF87
+ 2584 0b0c 04030000 		.4byte	.LASF87
+ 2585 0b10 15       		.byte	0x15
+ 2586 0b11 18       		.byte	0x18
+ 2587 0b12 1D       		.uleb128 0x1d
+ 2588 0b13 D5030000 		.4byte	.LASF88
+ 2589 0b17 D5030000 		.4byte	.LASF88
+ 2590 0b1b 0F       		.byte	0xf
+ 2591 0b1c 54       		.byte	0x54
+ 2592 0b1d 1D       		.uleb128 0x1d
+ 2593 0b1e E5000000 		.4byte	.LASF89
+ 2594 0b22 E5000000 		.4byte	.LASF89
+ 2595 0b26 11       		.byte	0x11
+ 2596 0b27 18       		.byte	0x18
+ 2597 0b28 1D       		.uleb128 0x1d
+ARM GAS  C:\Users\brenn\AppData\Local\Temp\ccOzUpww.s 			page 52
+
+
+ 2598 0b29 B5040000 		.4byte	.LASF90
+ 2599 0b2d B5040000 		.4byte	.LASF90
+ 2600 0b31 14       		.byte	0x14
+ 2601 0b32 5A       		.byte	0x5a
+ 2602 0b33 1D       		.uleb128 0x1d
+ 2603 0b34 67010000 		.4byte	.LASF91
+ 2604 0b38 67010000 		.4byte	.LASF91
+ 2605 0b3c 16       		.byte	0x16
+ 2606 0b3d 27       		.byte	0x27
+ 2607 0b3e 1D       		.uleb128 0x1d
+ 2608 0b3f FF040000 		.4byte	.LASF92
+ 2609 0b43 FF040000 		.4byte	.LASF92
+ 2610 0b47 06       		.byte	0x6
+ 2611 0b48 92       		.byte	0x92
+ 2612 0b49 1D       		.uleb128 0x1d
+ 2613 0b4a 36010000 		.4byte	.LASF93
+ 2614 0b4e 36010000 		.4byte	.LASF93
+ 2615 0b52 10       		.byte	0x10
+ 2616 0b53 33       		.byte	0x33
+ 2617 0b54 1D       		.uleb128 0x1d
+ 2618 0b55 92030000 		.4byte	.LASF94
+ 2619 0b59 92030000 		.4byte	.LASF94
+ 2620 0b5d 08       		.byte	0x8
+ 2621 0b5e 25       		.byte	0x25
+ 2622 0b5f 1D       		.uleb128 0x1d
+ 2623 0b60 F0010000 		.4byte	.LASF95
+ 2624 0b64 F0010000 		.4byte	.LASF95
+ 2625 0b68 0A       		.byte	0xa
+ 2626 0b69 3A       		.byte	0x3a
+ 2627 0b6a 1D       		.uleb128 0x1d
+ 2628 0b6b 44050000 		.4byte	.LASF96
+ 2629 0b6f 44050000 		.4byte	.LASF96
+ 2630 0b73 0A       		.byte	0xa
+ 2631 0b74 3D       		.byte	0x3d
+ 2632 0b75 1D       		.uleb128 0x1d
+ 2633 0b76 5D020000 		.4byte	.LASF97
+ 2634 0b7a 5D020000 		.4byte	.LASF97
+ 2635 0b7e 07       		.byte	0x7
+ 2636 0b7f 38       		.byte	0x38
+ 2637 0b80 1D       		.uleb128 0x1d
+ 2638 0b81 14010000 		.4byte	.LASF98
+ 2639 0b85 14010000 		.4byte	.LASF98
+ 2640 0b89 17       		.byte	0x17
+ 2641 0b8a 29       		.byte	0x29
+ 2642 0b8b 1D       		.uleb128 0x1d
+ 2643 0b8c 73020000 		.4byte	.LASF99
+ 2644 0b90 73020000 		.4byte	.LASF99
+ 2645 0b94 18       		.byte	0x18
+ 2646 0b95 0F       		.byte	0xf
+ 2647 0b96 1D       		.uleb128 0x1d
+ 2648 0b97 62050000 		.4byte	.LASF100
+ 2649 0b9b 62050000 		.4byte	.LASF100
+ 2650 0b9f 19       		.byte	0x19
+ 2651 0ba0 29       		.byte	0x29
+ 2652 0ba1 1D       		.uleb128 0x1d
+ 2653 0ba2 A9030000 		.4byte	.LASF101
+ 2654 0ba6 A9030000 		.4byte	.LASF101
+ARM GAS  C:\Users\brenn\AppData\Local\Temp\ccOzUpww.s 			page 53
+
+
+ 2655 0baa 1A       		.byte	0x1a
+ 2656 0bab 29       		.byte	0x29
+ 2657 0bac 00       		.byte	0
+ 2658              		.section	.debug_abbrev,"",%progbits
+ 2659              	.Ldebug_abbrev0:
+ 2660 0000 01       		.uleb128 0x1
+ 2661 0001 11       		.uleb128 0x11
+ 2662 0002 01       		.byte	0x1
+ 2663 0003 25       		.uleb128 0x25
+ 2664 0004 0E       		.uleb128 0xe
+ 2665 0005 13       		.uleb128 0x13
+ 2666 0006 0B       		.uleb128 0xb
+ 2667 0007 03       		.uleb128 0x3
+ 2668 0008 0E       		.uleb128 0xe
+ 2669 0009 1B       		.uleb128 0x1b
+ 2670 000a 0E       		.uleb128 0xe
+ 2671 000b 55       		.uleb128 0x55
+ 2672 000c 17       		.uleb128 0x17
+ 2673 000d 11       		.uleb128 0x11
+ 2674 000e 01       		.uleb128 0x1
+ 2675 000f 10       		.uleb128 0x10
+ 2676 0010 17       		.uleb128 0x17
+ 2677 0011 00       		.byte	0
+ 2678 0012 00       		.byte	0
+ 2679 0013 02       		.uleb128 0x2
+ 2680 0014 24       		.uleb128 0x24
+ 2681 0015 00       		.byte	0
+ 2682 0016 0B       		.uleb128 0xb
+ 2683 0017 0B       		.uleb128 0xb
+ 2684 0018 3E       		.uleb128 0x3e
+ 2685 0019 0B       		.uleb128 0xb
+ 2686 001a 03       		.uleb128 0x3
+ 2687 001b 08       		.uleb128 0x8
+ 2688 001c 00       		.byte	0
+ 2689 001d 00       		.byte	0
+ 2690 001e 03       		.uleb128 0x3
+ 2691 001f 24       		.uleb128 0x24
+ 2692 0020 00       		.byte	0
+ 2693 0021 0B       		.uleb128 0xb
+ 2694 0022 0B       		.uleb128 0xb
+ 2695 0023 3E       		.uleb128 0x3e
+ 2696 0024 0B       		.uleb128 0xb
+ 2697 0025 03       		.uleb128 0x3
+ 2698 0026 0E       		.uleb128 0xe
+ 2699 0027 00       		.byte	0
+ 2700 0028 00       		.byte	0
+ 2701 0029 04       		.uleb128 0x4
+ 2702 002a 16       		.uleb128 0x16
+ 2703 002b 00       		.byte	0
+ 2704 002c 03       		.uleb128 0x3
+ 2705 002d 0E       		.uleb128 0xe
+ 2706 002e 3A       		.uleb128 0x3a
+ 2707 002f 0B       		.uleb128 0xb
+ 2708 0030 3B       		.uleb128 0x3b
+ 2709 0031 0B       		.uleb128 0xb
+ 2710 0032 49       		.uleb128 0x49
+ 2711 0033 13       		.uleb128 0x13
+ARM GAS  C:\Users\brenn\AppData\Local\Temp\ccOzUpww.s 			page 54
+
+
+ 2712 0034 00       		.byte	0
+ 2713 0035 00       		.byte	0
+ 2714 0036 05       		.uleb128 0x5
+ 2715 0037 0F       		.uleb128 0xf
+ 2716 0038 00       		.byte	0
+ 2717 0039 0B       		.uleb128 0xb
+ 2718 003a 0B       		.uleb128 0xb
+ 2719 003b 49       		.uleb128 0x49
+ 2720 003c 13       		.uleb128 0x13
+ 2721 003d 00       		.byte	0
+ 2722 003e 00       		.byte	0
+ 2723 003f 06       		.uleb128 0x6
+ 2724 0040 26       		.uleb128 0x26
+ 2725 0041 00       		.byte	0
+ 2726 0042 49       		.uleb128 0x49
+ 2727 0043 13       		.uleb128 0x13
+ 2728 0044 00       		.byte	0
+ 2729 0045 00       		.byte	0
+ 2730 0046 07       		.uleb128 0x7
+ 2731 0047 16       		.uleb128 0x16
+ 2732 0048 00       		.byte	0
+ 2733 0049 03       		.uleb128 0x3
+ 2734 004a 0E       		.uleb128 0xe
+ 2735 004b 3A       		.uleb128 0x3a
+ 2736 004c 0B       		.uleb128 0xb
+ 2737 004d 3B       		.uleb128 0x3b
+ 2738 004e 05       		.uleb128 0x5
+ 2739 004f 49       		.uleb128 0x49
+ 2740 0050 13       		.uleb128 0x13
+ 2741 0051 00       		.byte	0
+ 2742 0052 00       		.byte	0
+ 2743 0053 08       		.uleb128 0x8
+ 2744 0054 2E       		.uleb128 0x2e
+ 2745 0055 01       		.byte	0x1
+ 2746 0056 3F       		.uleb128 0x3f
+ 2747 0057 19       		.uleb128 0x19
+ 2748 0058 03       		.uleb128 0x3
+ 2749 0059 0E       		.uleb128 0xe
+ 2750 005a 3A       		.uleb128 0x3a
+ 2751 005b 0B       		.uleb128 0xb
+ 2752 005c 3B       		.uleb128 0x3b
+ 2753 005d 0B       		.uleb128 0xb
+ 2754 005e 27       		.uleb128 0x27
+ 2755 005f 19       		.uleb128 0x19
+ 2756 0060 11       		.uleb128 0x11
+ 2757 0061 01       		.uleb128 0x1
+ 2758 0062 12       		.uleb128 0x12
+ 2759 0063 06       		.uleb128 0x6
+ 2760 0064 40       		.uleb128 0x40
+ 2761 0065 18       		.uleb128 0x18
+ 2762 0066 9642     		.uleb128 0x2116
+ 2763 0068 19       		.uleb128 0x19
+ 2764 0069 01       		.uleb128 0x1
+ 2765 006a 13       		.uleb128 0x13
+ 2766 006b 00       		.byte	0
+ 2767 006c 00       		.byte	0
+ 2768 006d 09       		.uleb128 0x9
+ARM GAS  C:\Users\brenn\AppData\Local\Temp\ccOzUpww.s 			page 55
+
+
+ 2769 006e 05       		.uleb128 0x5
+ 2770 006f 00       		.byte	0
+ 2771 0070 03       		.uleb128 0x3
+ 2772 0071 0E       		.uleb128 0xe
+ 2773 0072 3A       		.uleb128 0x3a
+ 2774 0073 0B       		.uleb128 0xb
+ 2775 0074 3B       		.uleb128 0x3b
+ 2776 0075 0B       		.uleb128 0xb
+ 2777 0076 49       		.uleb128 0x49
+ 2778 0077 13       		.uleb128 0x13
+ 2779 0078 02       		.uleb128 0x2
+ 2780 0079 17       		.uleb128 0x17
+ 2781 007a 00       		.byte	0
+ 2782 007b 00       		.byte	0
+ 2783 007c 0A       		.uleb128 0xa
+ 2784 007d 0B       		.uleb128 0xb
+ 2785 007e 01       		.byte	0x1
+ 2786 007f 11       		.uleb128 0x11
+ 2787 0080 01       		.uleb128 0x1
+ 2788 0081 12       		.uleb128 0x12
+ 2789 0082 06       		.uleb128 0x6
+ 2790 0083 00       		.byte	0
+ 2791 0084 00       		.byte	0
+ 2792 0085 0B       		.uleb128 0xb
+ 2793 0086 34       		.uleb128 0x34
+ 2794 0087 00       		.byte	0
+ 2795 0088 03       		.uleb128 0x3
+ 2796 0089 08       		.uleb128 0x8
+ 2797 008a 3A       		.uleb128 0x3a
+ 2798 008b 0B       		.uleb128 0xb
+ 2799 008c 3B       		.uleb128 0x3b
+ 2800 008d 0B       		.uleb128 0xb
+ 2801 008e 49       		.uleb128 0x49
+ 2802 008f 13       		.uleb128 0x13
+ 2803 0090 02       		.uleb128 0x2
+ 2804 0091 17       		.uleb128 0x17
+ 2805 0092 00       		.byte	0
+ 2806 0093 00       		.byte	0
+ 2807 0094 0C       		.uleb128 0xc
+ 2808 0095 898201   		.uleb128 0x4109
+ 2809 0098 00       		.byte	0
+ 2810 0099 11       		.uleb128 0x11
+ 2811 009a 01       		.uleb128 0x1
+ 2812 009b 31       		.uleb128 0x31
+ 2813 009c 13       		.uleb128 0x13
+ 2814 009d 00       		.byte	0
+ 2815 009e 00       		.byte	0
+ 2816 009f 0D       		.uleb128 0xd
+ 2817 00a0 2E       		.uleb128 0x2e
+ 2818 00a1 01       		.byte	0x1
+ 2819 00a2 3F       		.uleb128 0x3f
+ 2820 00a3 19       		.uleb128 0x19
+ 2821 00a4 03       		.uleb128 0x3
+ 2822 00a5 0E       		.uleb128 0xe
+ 2823 00a6 3A       		.uleb128 0x3a
+ 2824 00a7 0B       		.uleb128 0xb
+ 2825 00a8 3B       		.uleb128 0x3b
+ARM GAS  C:\Users\brenn\AppData\Local\Temp\ccOzUpww.s 			page 56
+
+
+ 2826 00a9 0B       		.uleb128 0xb
+ 2827 00aa 11       		.uleb128 0x11
+ 2828 00ab 01       		.uleb128 0x1
+ 2829 00ac 12       		.uleb128 0x12
+ 2830 00ad 06       		.uleb128 0x6
+ 2831 00ae 40       		.uleb128 0x40
+ 2832 00af 18       		.uleb128 0x18
+ 2833 00b0 9742     		.uleb128 0x2117
+ 2834 00b2 19       		.uleb128 0x19
+ 2835 00b3 01       		.uleb128 0x1
+ 2836 00b4 13       		.uleb128 0x13
+ 2837 00b5 00       		.byte	0
+ 2838 00b6 00       		.byte	0
+ 2839 00b7 0E       		.uleb128 0xe
+ 2840 00b8 898201   		.uleb128 0x4109
+ 2841 00bb 01       		.byte	0x1
+ 2842 00bc 11       		.uleb128 0x11
+ 2843 00bd 01       		.uleb128 0x1
+ 2844 00be 31       		.uleb128 0x31
+ 2845 00bf 13       		.uleb128 0x13
+ 2846 00c0 01       		.uleb128 0x1
+ 2847 00c1 13       		.uleb128 0x13
+ 2848 00c2 00       		.byte	0
+ 2849 00c3 00       		.byte	0
+ 2850 00c4 0F       		.uleb128 0xf
+ 2851 00c5 8A8201   		.uleb128 0x410a
+ 2852 00c8 00       		.byte	0
+ 2853 00c9 02       		.uleb128 0x2
+ 2854 00ca 18       		.uleb128 0x18
+ 2855 00cb 9142     		.uleb128 0x2111
+ 2856 00cd 18       		.uleb128 0x18
+ 2857 00ce 00       		.byte	0
+ 2858 00cf 00       		.byte	0
+ 2859 00d0 10       		.uleb128 0x10
+ 2860 00d1 898201   		.uleb128 0x4109
+ 2861 00d4 01       		.byte	0x1
+ 2862 00d5 11       		.uleb128 0x11
+ 2863 00d6 01       		.uleb128 0x1
+ 2864 00d7 31       		.uleb128 0x31
+ 2865 00d8 13       		.uleb128 0x13
+ 2866 00d9 00       		.byte	0
+ 2867 00da 00       		.byte	0
+ 2868 00db 11       		.uleb128 0x11
+ 2869 00dc 2E       		.uleb128 0x2e
+ 2870 00dd 01       		.byte	0x1
+ 2871 00de 3F       		.uleb128 0x3f
+ 2872 00df 19       		.uleb128 0x19
+ 2873 00e0 03       		.uleb128 0x3
+ 2874 00e1 0E       		.uleb128 0xe
+ 2875 00e2 3A       		.uleb128 0x3a
+ 2876 00e3 0B       		.uleb128 0xb
+ 2877 00e4 3B       		.uleb128 0x3b
+ 2878 00e5 0B       		.uleb128 0xb
+ 2879 00e6 27       		.uleb128 0x27
+ 2880 00e7 19       		.uleb128 0x19
+ 2881 00e8 11       		.uleb128 0x11
+ 2882 00e9 01       		.uleb128 0x1
+ARM GAS  C:\Users\brenn\AppData\Local\Temp\ccOzUpww.s 			page 57
+
+
+ 2883 00ea 12       		.uleb128 0x12
+ 2884 00eb 06       		.uleb128 0x6
+ 2885 00ec 40       		.uleb128 0x40
+ 2886 00ed 18       		.uleb128 0x18
+ 2887 00ee 9742     		.uleb128 0x2117
+ 2888 00f0 19       		.uleb128 0x19
+ 2889 00f1 01       		.uleb128 0x1
+ 2890 00f2 13       		.uleb128 0x13
+ 2891 00f3 00       		.byte	0
+ 2892 00f4 00       		.byte	0
+ 2893 00f5 12       		.uleb128 0x12
+ 2894 00f6 34       		.uleb128 0x34
+ 2895 00f7 00       		.byte	0
+ 2896 00f8 03       		.uleb128 0x3
+ 2897 00f9 0E       		.uleb128 0xe
+ 2898 00fa 3A       		.uleb128 0x3a
+ 2899 00fb 0B       		.uleb128 0xb
+ 2900 00fc 3B       		.uleb128 0x3b
+ 2901 00fd 0B       		.uleb128 0xb
+ 2902 00fe 49       		.uleb128 0x49
+ 2903 00ff 13       		.uleb128 0x13
+ 2904 0100 02       		.uleb128 0x2
+ 2905 0101 17       		.uleb128 0x17
+ 2906 0102 00       		.byte	0
+ 2907 0103 00       		.byte	0
+ 2908 0104 13       		.uleb128 0x13
+ 2909 0105 2E       		.uleb128 0x2e
+ 2910 0106 01       		.byte	0x1
+ 2911 0107 3F       		.uleb128 0x3f
+ 2912 0108 19       		.uleb128 0x19
+ 2913 0109 03       		.uleb128 0x3
+ 2914 010a 0E       		.uleb128 0xe
+ 2915 010b 3A       		.uleb128 0x3a
+ 2916 010c 0B       		.uleb128 0xb
+ 2917 010d 3B       		.uleb128 0x3b
+ 2918 010e 0B       		.uleb128 0xb
+ 2919 010f 49       		.uleb128 0x49
+ 2920 0110 13       		.uleb128 0x13
+ 2921 0111 11       		.uleb128 0x11
+ 2922 0112 01       		.uleb128 0x1
+ 2923 0113 12       		.uleb128 0x12
+ 2924 0114 06       		.uleb128 0x6
+ 2925 0115 40       		.uleb128 0x40
+ 2926 0116 18       		.uleb128 0x18
+ 2927 0117 9742     		.uleb128 0x2117
+ 2928 0119 19       		.uleb128 0x19
+ 2929 011a 01       		.uleb128 0x1
+ 2930 011b 13       		.uleb128 0x13
+ 2931 011c 00       		.byte	0
+ 2932 011d 00       		.byte	0
+ 2933 011e 14       		.uleb128 0x14
+ 2934 011f 34       		.uleb128 0x34
+ 2935 0120 00       		.byte	0
+ 2936 0121 03       		.uleb128 0x3
+ 2937 0122 0E       		.uleb128 0xe
+ 2938 0123 3A       		.uleb128 0x3a
+ 2939 0124 0B       		.uleb128 0xb
+ARM GAS  C:\Users\brenn\AppData\Local\Temp\ccOzUpww.s 			page 58
+
+
+ 2940 0125 3B       		.uleb128 0x3b
+ 2941 0126 0B       		.uleb128 0xb
+ 2942 0127 49       		.uleb128 0x49
+ 2943 0128 13       		.uleb128 0x13
+ 2944 0129 02       		.uleb128 0x2
+ 2945 012a 18       		.uleb128 0x18
+ 2946 012b 00       		.byte	0
+ 2947 012c 00       		.byte	0
+ 2948 012d 15       		.uleb128 0x15
+ 2949 012e 2E       		.uleb128 0x2e
+ 2950 012f 01       		.byte	0x1
+ 2951 0130 3F       		.uleb128 0x3f
+ 2952 0131 19       		.uleb128 0x19
+ 2953 0132 03       		.uleb128 0x3
+ 2954 0133 0E       		.uleb128 0xe
+ 2955 0134 3A       		.uleb128 0x3a
+ 2956 0135 0B       		.uleb128 0xb
+ 2957 0136 3B       		.uleb128 0x3b
+ 2958 0137 0B       		.uleb128 0xb
+ 2959 0138 11       		.uleb128 0x11
+ 2960 0139 01       		.uleb128 0x1
+ 2961 013a 12       		.uleb128 0x12
+ 2962 013b 06       		.uleb128 0x6
+ 2963 013c 40       		.uleb128 0x40
+ 2964 013d 18       		.uleb128 0x18
+ 2965 013e 9642     		.uleb128 0x2116
+ 2966 0140 19       		.uleb128 0x19
+ 2967 0141 01       		.uleb128 0x1
+ 2968 0142 13       		.uleb128 0x13
+ 2969 0143 00       		.byte	0
+ 2970 0144 00       		.byte	0
+ 2971 0145 16       		.uleb128 0x16
+ 2972 0146 2E       		.uleb128 0x2e
+ 2973 0147 01       		.byte	0x1
+ 2974 0148 3F       		.uleb128 0x3f
+ 2975 0149 19       		.uleb128 0x19
+ 2976 014a 03       		.uleb128 0x3
+ 2977 014b 0E       		.uleb128 0xe
+ 2978 014c 3A       		.uleb128 0x3a
+ 2979 014d 0B       		.uleb128 0xb
+ 2980 014e 3B       		.uleb128 0x3b
+ 2981 014f 0B       		.uleb128 0xb
+ 2982 0150 27       		.uleb128 0x27
+ 2983 0151 19       		.uleb128 0x19
+ 2984 0152 49       		.uleb128 0x49
+ 2985 0153 13       		.uleb128 0x13
+ 2986 0154 8701     		.uleb128 0x87
+ 2987 0156 19       		.uleb128 0x19
+ 2988 0157 11       		.uleb128 0x11
+ 2989 0158 01       		.uleb128 0x1
+ 2990 0159 12       		.uleb128 0x12
+ 2991 015a 06       		.uleb128 0x6
+ 2992 015b 40       		.uleb128 0x40
+ 2993 015c 18       		.uleb128 0x18
+ 2994 015d 9742     		.uleb128 0x2117
+ 2995 015f 19       		.uleb128 0x19
+ 2996 0160 01       		.uleb128 0x1
+ARM GAS  C:\Users\brenn\AppData\Local\Temp\ccOzUpww.s 			page 59
+
+
+ 2997 0161 13       		.uleb128 0x13
+ 2998 0162 00       		.byte	0
+ 2999 0163 00       		.byte	0
+ 3000 0164 17       		.uleb128 0x17
+ 3001 0165 34       		.uleb128 0x34
+ 3002 0166 00       		.byte	0
+ 3003 0167 03       		.uleb128 0x3
+ 3004 0168 0E       		.uleb128 0xe
+ 3005 0169 3A       		.uleb128 0x3a
+ 3006 016a 0B       		.uleb128 0xb
+ 3007 016b 3B       		.uleb128 0x3b
+ 3008 016c 05       		.uleb128 0x5
+ 3009 016d 49       		.uleb128 0x49
+ 3010 016e 13       		.uleb128 0x13
+ 3011 016f 3F       		.uleb128 0x3f
+ 3012 0170 19       		.uleb128 0x19
+ 3013 0171 3C       		.uleb128 0x3c
+ 3014 0172 19       		.uleb128 0x19
+ 3015 0173 00       		.byte	0
+ 3016 0174 00       		.byte	0
+ 3017 0175 18       		.uleb128 0x18
+ 3018 0176 35       		.uleb128 0x35
+ 3019 0177 00       		.byte	0
+ 3020 0178 49       		.uleb128 0x49
+ 3021 0179 13       		.uleb128 0x13
+ 3022 017a 00       		.byte	0
+ 3023 017b 00       		.byte	0
+ 3024 017c 19       		.uleb128 0x19
+ 3025 017d 34       		.uleb128 0x34
+ 3026 017e 00       		.byte	0
+ 3027 017f 03       		.uleb128 0x3
+ 3028 0180 0E       		.uleb128 0xe
+ 3029 0181 3A       		.uleb128 0x3a
+ 3030 0182 0B       		.uleb128 0xb
+ 3031 0183 3B       		.uleb128 0x3b
+ 3032 0184 0B       		.uleb128 0xb
+ 3033 0185 49       		.uleb128 0x49
+ 3034 0186 13       		.uleb128 0x13
+ 3035 0187 3F       		.uleb128 0x3f
+ 3036 0188 19       		.uleb128 0x19
+ 3037 0189 02       		.uleb128 0x2
+ 3038 018a 18       		.uleb128 0x18
+ 3039 018b 00       		.byte	0
+ 3040 018c 00       		.byte	0
+ 3041 018d 1A       		.uleb128 0x1a
+ 3042 018e 01       		.uleb128 0x1
+ 3043 018f 01       		.byte	0x1
+ 3044 0190 49       		.uleb128 0x49
+ 3045 0191 13       		.uleb128 0x13
+ 3046 0192 01       		.uleb128 0x1
+ 3047 0193 13       		.uleb128 0x13
+ 3048 0194 00       		.byte	0
+ 3049 0195 00       		.byte	0
+ 3050 0196 1B       		.uleb128 0x1b
+ 3051 0197 21       		.uleb128 0x21
+ 3052 0198 00       		.byte	0
+ 3053 0199 49       		.uleb128 0x49
+ARM GAS  C:\Users\brenn\AppData\Local\Temp\ccOzUpww.s 			page 60
+
+
+ 3054 019a 13       		.uleb128 0x13
+ 3055 019b 2F       		.uleb128 0x2f
+ 3056 019c 0B       		.uleb128 0xb
+ 3057 019d 00       		.byte	0
+ 3058 019e 00       		.byte	0
+ 3059 019f 1C       		.uleb128 0x1c
+ 3060 01a0 2E       		.uleb128 0x2e
+ 3061 01a1 00       		.byte	0
+ 3062 01a2 3F       		.uleb128 0x3f
+ 3063 01a3 19       		.uleb128 0x19
+ 3064 01a4 3C       		.uleb128 0x3c
+ 3065 01a5 19       		.uleb128 0x19
+ 3066 01a6 6E       		.uleb128 0x6e
+ 3067 01a7 08       		.uleb128 0x8
+ 3068 01a8 03       		.uleb128 0x3
+ 3069 01a9 08       		.uleb128 0x8
+ 3070 01aa 3A       		.uleb128 0x3a
+ 3071 01ab 0B       		.uleb128 0xb
+ 3072 01ac 3B       		.uleb128 0x3b
+ 3073 01ad 0B       		.uleb128 0xb
+ 3074 01ae 00       		.byte	0
+ 3075 01af 00       		.byte	0
+ 3076 01b0 1D       		.uleb128 0x1d
+ 3077 01b1 2E       		.uleb128 0x2e
+ 3078 01b2 00       		.byte	0
+ 3079 01b3 3F       		.uleb128 0x3f
+ 3080 01b4 19       		.uleb128 0x19
+ 3081 01b5 3C       		.uleb128 0x3c
+ 3082 01b6 19       		.uleb128 0x19
+ 3083 01b7 6E       		.uleb128 0x6e
+ 3084 01b8 0E       		.uleb128 0xe
+ 3085 01b9 03       		.uleb128 0x3
+ 3086 01ba 0E       		.uleb128 0xe
+ 3087 01bb 3A       		.uleb128 0x3a
+ 3088 01bc 0B       		.uleb128 0xb
+ 3089 01bd 3B       		.uleb128 0x3b
+ 3090 01be 0B       		.uleb128 0xb
+ 3091 01bf 00       		.byte	0
+ 3092 01c0 00       		.byte	0
+ 3093 01c1 00       		.byte	0
+ 3094              		.section	.debug_loc,"",%progbits
+ 3095              	.Ldebug_loc0:
+ 3096              	.LLST0:
+ 3097 0000 00000000 		.4byte	.LVL0
+ 3098 0004 0C000000 		.4byte	.LVL2
+ 3099 0008 0100     		.2byte	0x1
+ 3100 000a 50       		.byte	0x50
+ 3101 000b 0C000000 		.4byte	.LVL2
+ 3102 000f 62000000 		.4byte	.LVL13
+ 3103 0013 0100     		.2byte	0x1
+ 3104 0015 58       		.byte	0x58
+ 3105 0016 62000000 		.4byte	.LVL13
+ 3106 001a 80000000 		.4byte	.LFE64
+ 3107 001e 0400     		.2byte	0x4
+ 3108 0020 F3       		.byte	0xf3
+ 3109 0021 01       		.uleb128 0x1
+ 3110 0022 50       		.byte	0x50
+ARM GAS  C:\Users\brenn\AppData\Local\Temp\ccOzUpww.s 			page 61
+
+
+ 3111 0023 9F       		.byte	0x9f
+ 3112 0024 00000000 		.4byte	0
+ 3113 0028 00000000 		.4byte	0
+ 3114              	.LLST1:
+ 3115 002c 00000000 		.4byte	.LVL0
+ 3116 0030 0C000000 		.4byte	.LVL2
+ 3117 0034 0100     		.2byte	0x1
+ 3118 0036 51       		.byte	0x51
+ 3119 0037 0C000000 		.4byte	.LVL2
+ 3120 003b 62000000 		.4byte	.LVL13
+ 3121 003f 0100     		.2byte	0x1
+ 3122 0041 55       		.byte	0x55
+ 3123 0042 62000000 		.4byte	.LVL13
+ 3124 0046 80000000 		.4byte	.LFE64
+ 3125 004a 0400     		.2byte	0x4
+ 3126 004c F3       		.byte	0xf3
+ 3127 004d 01       		.uleb128 0x1
+ 3128 004e 51       		.byte	0x51
+ 3129 004f 9F       		.byte	0x9f
+ 3130 0050 00000000 		.4byte	0
+ 3131 0054 00000000 		.4byte	0
+ 3132              	.LLST2:
+ 3133 0058 08000000 		.4byte	.LVL1
+ 3134 005c 0C000000 		.4byte	.LVL2
+ 3135 0060 0200     		.2byte	0x2
+ 3136 0062 30       		.byte	0x30
+ 3137 0063 9F       		.byte	0x9f
+ 3138 0064 0C000000 		.4byte	.LVL2
+ 3139 0068 62000000 		.4byte	.LVL13
+ 3140 006c 0100     		.2byte	0x1
+ 3141 006e 54       		.byte	0x54
+ 3142 006f 00000000 		.4byte	0
+ 3143 0073 00000000 		.4byte	0
+ 3144              	.LLST3:
+ 3145 0077 00000000 		.4byte	.LVL16
+ 3146 007b 06000000 		.4byte	.LVL17
+ 3147 007f 0100     		.2byte	0x1
+ 3148 0081 50       		.byte	0x50
+ 3149 0082 06000000 		.4byte	.LVL17
+ 3150 0086 14000000 		.4byte	.LFE66
+ 3151 008a 0100     		.2byte	0x1
+ 3152 008c 54       		.byte	0x54
+ 3153 008d 00000000 		.4byte	0
+ 3154 0091 00000000 		.4byte	0
+ 3155              	.LLST4:
+ 3156 0095 00000000 		.4byte	.LVL16
+ 3157 0099 08000000 		.4byte	.LVL18
+ 3158 009d 0100     		.2byte	0x1
+ 3159 009f 51       		.byte	0x51
+ 3160 00a0 08000000 		.4byte	.LVL18
+ 3161 00a4 14000000 		.4byte	.LFE66
+ 3162 00a8 0400     		.2byte	0x4
+ 3163 00aa F3       		.byte	0xf3
+ 3164 00ab 01       		.uleb128 0x1
+ 3165 00ac 51       		.byte	0x51
+ 3166 00ad 9F       		.byte	0x9f
+ 3167 00ae 00000000 		.4byte	0
+ARM GAS  C:\Users\brenn\AppData\Local\Temp\ccOzUpww.s 			page 62
+
+
+ 3168 00b2 00000000 		.4byte	0
+ 3169              	.LLST5:
+ 3170 00b6 00000000 		.4byte	.LVL16
+ 3171 00ba 0B000000 		.4byte	.LVL19-1
+ 3172 00be 0100     		.2byte	0x1
+ 3173 00c0 52       		.byte	0x52
+ 3174 00c1 0B000000 		.4byte	.LVL19-1
+ 3175 00c5 14000000 		.4byte	.LFE66
+ 3176 00c9 0400     		.2byte	0x4
+ 3177 00cb F3       		.byte	0xf3
+ 3178 00cc 01       		.uleb128 0x1
+ 3179 00cd 52       		.byte	0x52
+ 3180 00ce 9F       		.byte	0x9f
+ 3181 00cf 00000000 		.4byte	0
+ 3182 00d3 00000000 		.4byte	0
+ 3183              	.LLST6:
+ 3184 00d7 12000000 		.4byte	.LVL23
+ 3185 00db 1A000000 		.4byte	.LVL24
+ 3186 00df 0100     		.2byte	0x1
+ 3187 00e1 50       		.byte	0x50
+ 3188 00e2 1A000000 		.4byte	.LVL24
+ 3189 00e6 48000000 		.4byte	.LVL29
+ 3190 00ea 0700     		.2byte	0x7
+ 3191 00ec 75       		.byte	0x75
+ 3192 00ed 00       		.sleb128 0
+ 3193 00ee 0A       		.byte	0xa
+ 3194 00ef FFFF     		.2byte	0xffff
+ 3195 00f1 1B       		.byte	0x1b
+ 3196 00f2 9F       		.byte	0x9f
+ 3197 00f3 00000000 		.4byte	0
+ 3198 00f7 00000000 		.4byte	0
+ 3199              	.LLST7:
+ 3200 00fb 2A000000 		.4byte	.LVL27
+ 3201 00ff 2E000000 		.4byte	.LVL28
+ 3202 0103 0100     		.2byte	0x1
+ 3203 0105 50       		.byte	0x50
+ 3204 0106 2E000000 		.4byte	.LVL28
+ 3205 010a 54000000 		.4byte	.LFE67
+ 3206 010e 0700     		.2byte	0x7
+ 3207 0110 70       		.byte	0x70
+ 3208 0111 00       		.sleb128 0
+ 3209 0112 0A       		.byte	0xa
+ 3210 0113 FFFF     		.2byte	0xffff
+ 3211 0115 1B       		.byte	0x1b
+ 3212 0116 9F       		.byte	0x9f
+ 3213 0117 00000000 		.4byte	0
+ 3214 011b 00000000 		.4byte	0
+ 3215              	.LLST8:
+ 3216 011f 00000000 		.4byte	.LVL36
+ 3217 0123 06000000 		.4byte	.LVL37
+ 3218 0127 0100     		.2byte	0x1
+ 3219 0129 50       		.byte	0x50
+ 3220 012a 06000000 		.4byte	.LVL37
+ 3221 012e 12000000 		.4byte	.LFE74
+ 3222 0132 0400     		.2byte	0x4
+ 3223 0134 F3       		.byte	0xf3
+ 3224 0135 01       		.uleb128 0x1
+ARM GAS  C:\Users\brenn\AppData\Local\Temp\ccOzUpww.s 			page 63
+
+
+ 3225 0136 50       		.byte	0x50
+ 3226 0137 9F       		.byte	0x9f
+ 3227 0138 00000000 		.4byte	0
+ 3228 013c 00000000 		.4byte	0
+ 3229              	.LLST9:
+ 3230 0140 00000000 		.4byte	.LVL40
+ 3231 0144 06000000 		.4byte	.LVL41
+ 3232 0148 0100     		.2byte	0x1
+ 3233 014a 50       		.byte	0x50
+ 3234 014b 06000000 		.4byte	.LVL41
+ 3235 014f 12000000 		.4byte	.LFE75
+ 3236 0153 0400     		.2byte	0x4
+ 3237 0155 F3       		.byte	0xf3
+ 3238 0156 01       		.uleb128 0x1
+ 3239 0157 50       		.byte	0x50
+ 3240 0158 9F       		.byte	0x9f
+ 3241 0159 00000000 		.4byte	0
+ 3242 015d 00000000 		.4byte	0
+ 3243              	.LLST10:
+ 3244 0161 00000000 		.4byte	.LVL44
+ 3245 0165 05000000 		.4byte	.LVL45-1
+ 3246 0169 0100     		.2byte	0x1
+ 3247 016b 50       		.byte	0x50
+ 3248 016c 05000000 		.4byte	.LVL45-1
+ 3249 0170 08000000 		.4byte	.LFE76
+ 3250 0174 0400     		.2byte	0x4
+ 3251 0176 F3       		.byte	0xf3
+ 3252 0177 01       		.uleb128 0x1
+ 3253 0178 50       		.byte	0x50
+ 3254 0179 9F       		.byte	0x9f
+ 3255 017a 00000000 		.4byte	0
+ 3256 017e 00000000 		.4byte	0
+ 3257              	.LLST11:
+ 3258 0182 02000000 		.4byte	.LVL46
+ 3259 0186 06000000 		.4byte	.LVL47
+ 3260 018a 0200     		.2byte	0x2
+ 3261 018c 30       		.byte	0x30
+ 3262 018d 9F       		.byte	0x9f
+ 3263 018e 06000000 		.4byte	.LVL47
+ 3264 0192 2A000000 		.4byte	.LVL53
+ 3265 0196 0100     		.2byte	0x1
+ 3266 0198 54       		.byte	0x54
+ 3267 0199 00000000 		.4byte	0
+ 3268 019d 00000000 		.4byte	0
+ 3269              	.LLST12:
+ 3270 01a1 02000000 		.4byte	.LVL54
+ 3271 01a5 06000000 		.4byte	.LVL55
+ 3272 01a9 0300     		.2byte	0x3
+ 3273 01ab 08       		.byte	0x8
+ 3274 01ac 63       		.byte	0x63
+ 3275 01ad 9F       		.byte	0x9f
+ 3276 01ae 06000000 		.4byte	.LVL55
+ 3277 01b2 2A000000 		.4byte	.LVL61
+ 3278 01b6 0100     		.2byte	0x1
+ 3279 01b8 54       		.byte	0x54
+ 3280 01b9 00000000 		.4byte	0
+ 3281 01bd 00000000 		.4byte	0
+ARM GAS  C:\Users\brenn\AppData\Local\Temp\ccOzUpww.s 			page 64
+
+
+ 3282              	.LLST13:
+ 3283 01c1 08000000 		.4byte	.LVL82
+ 3284 01c5 12000000 		.4byte	.LVL83
+ 3285 01c9 0100     		.2byte	0x1
+ 3286 01cb 50       		.byte	0x50
+ 3287 01cc 00000000 		.4byte	0
+ 3288 01d0 00000000 		.4byte	0
+ 3289              		.section	.debug_aranges,"",%progbits
+ 3290 0000 C4000000 		.4byte	0xc4
+ 3291 0004 0200     		.2byte	0x2
+ 3292 0006 00000000 		.4byte	.Ldebug_info0
+ 3293 000a 04       		.byte	0x4
+ 3294 000b 00       		.byte	0
+ 3295 000c 0000     		.2byte	0
+ 3296 000e 0000     		.2byte	0
+ 3297 0010 00000000 		.4byte	.LFB64
+ 3298 0014 80000000 		.4byte	.LFE64-.LFB64
+ 3299 0018 00000000 		.4byte	.LFB65
+ 3300 001c 14000000 		.4byte	.LFE65-.LFB65
+ 3301 0020 00000000 		.4byte	.LFB66
+ 3302 0024 14000000 		.4byte	.LFE66-.LFB66
+ 3303 0028 00000000 		.4byte	.LFB67
+ 3304 002c 54000000 		.4byte	.LFE67-.LFB67
+ 3305 0030 00000000 		.4byte	.LFB68
+ 3306 0034 10000000 		.4byte	.LFE68-.LFB68
+ 3307 0038 00000000 		.4byte	.LFB69
+ 3308 003c 10000000 		.4byte	.LFE69-.LFB69
+ 3309 0040 00000000 		.4byte	.LFB70
+ 3310 0044 0C000000 		.4byte	.LFE70-.LFB70
+ 3311 0048 00000000 		.4byte	.LFB71
+ 3312 004c 0C000000 		.4byte	.LFE71-.LFB71
+ 3313 0050 00000000 		.4byte	.LFB72
+ 3314 0054 0C000000 		.4byte	.LFE72-.LFB72
+ 3315 0058 00000000 		.4byte	.LFB73
+ 3316 005c 0C000000 		.4byte	.LFE73-.LFB73
+ 3317 0060 00000000 		.4byte	.LFB74
+ 3318 0064 12000000 		.4byte	.LFE74-.LFB74
+ 3319 0068 00000000 		.4byte	.LFB75
+ 3320 006c 12000000 		.4byte	.LFE75-.LFB75
+ 3321 0070 00000000 		.4byte	.LFB76
+ 3322 0074 08000000 		.4byte	.LFE76-.LFB76
+ 3323 0078 00000000 		.4byte	.LFB77
+ 3324 007c 34000000 		.4byte	.LFE77-.LFB77
+ 3325 0080 00000000 		.4byte	.LFB78
+ 3326 0084 34000000 		.4byte	.LFE78-.LFB78
+ 3327 0088 00000000 		.4byte	.LFB79
+ 3328 008c 54000000 		.4byte	.LFE79-.LFB79
+ 3329 0090 00000000 		.4byte	.LFB80
+ 3330 0094 40000000 		.4byte	.LFE80-.LFB80
+ 3331 0098 00000000 		.4byte	.LFB83
+ 3332 009c C8000000 		.4byte	.LFE83-.LFB83
+ 3333 00a0 00000000 		.4byte	.LFB81
+ 3334 00a4 14000000 		.4byte	.LFE81-.LFB81
+ 3335 00a8 00000000 		.4byte	.LFB82
+ 3336 00ac 2C000000 		.4byte	.LFE82-.LFB82
+ 3337 00b0 00000000 		.4byte	.LFB84
+ 3338 00b4 0C000000 		.4byte	.LFE84-.LFB84
+ARM GAS  C:\Users\brenn\AppData\Local\Temp\ccOzUpww.s 			page 65
+
+
+ 3339 00b8 00000000 		.4byte	.LFB85
+ 3340 00bc AC000000 		.4byte	.LFE85-.LFB85
+ 3341 00c0 00000000 		.4byte	0
+ 3342 00c4 00000000 		.4byte	0
+ 3343              		.section	.debug_ranges,"",%progbits
+ 3344              	.Ldebug_ranges0:
+ 3345 0000 00000000 		.4byte	.LFB64
+ 3346 0004 80000000 		.4byte	.LFE64
+ 3347 0008 00000000 		.4byte	.LFB65
+ 3348 000c 14000000 		.4byte	.LFE65
+ 3349 0010 00000000 		.4byte	.LFB66
+ 3350 0014 14000000 		.4byte	.LFE66
+ 3351 0018 00000000 		.4byte	.LFB67
+ 3352 001c 54000000 		.4byte	.LFE67
+ 3353 0020 00000000 		.4byte	.LFB68
+ 3354 0024 10000000 		.4byte	.LFE68
+ 3355 0028 00000000 		.4byte	.LFB69
+ 3356 002c 10000000 		.4byte	.LFE69
+ 3357 0030 00000000 		.4byte	.LFB70
+ 3358 0034 0C000000 		.4byte	.LFE70
+ 3359 0038 00000000 		.4byte	.LFB71
+ 3360 003c 0C000000 		.4byte	.LFE71
+ 3361 0040 00000000 		.4byte	.LFB72
+ 3362 0044 0C000000 		.4byte	.LFE72
+ 3363 0048 00000000 		.4byte	.LFB73
+ 3364 004c 0C000000 		.4byte	.LFE73
+ 3365 0050 00000000 		.4byte	.LFB74
+ 3366 0054 12000000 		.4byte	.LFE74
+ 3367 0058 00000000 		.4byte	.LFB75
+ 3368 005c 12000000 		.4byte	.LFE75
+ 3369 0060 00000000 		.4byte	.LFB76
+ 3370 0064 08000000 		.4byte	.LFE76
+ 3371 0068 00000000 		.4byte	.LFB77
+ 3372 006c 34000000 		.4byte	.LFE77
+ 3373 0070 00000000 		.4byte	.LFB78
+ 3374 0074 34000000 		.4byte	.LFE78
+ 3375 0078 00000000 		.4byte	.LFB79
+ 3376 007c 54000000 		.4byte	.LFE79
+ 3377 0080 00000000 		.4byte	.LFB80
+ 3378 0084 40000000 		.4byte	.LFE80
+ 3379 0088 00000000 		.4byte	.LFB83
+ 3380 008c C8000000 		.4byte	.LFE83
+ 3381 0090 00000000 		.4byte	.LFB81
+ 3382 0094 14000000 		.4byte	.LFE81
+ 3383 0098 00000000 		.4byte	.LFB82
+ 3384 009c 2C000000 		.4byte	.LFE82
+ 3385 00a0 00000000 		.4byte	.LFB84
+ 3386 00a4 0C000000 		.4byte	.LFE84
+ 3387 00a8 00000000 		.4byte	.LFB85
+ 3388 00ac AC000000 		.4byte	.LFE85
+ 3389 00b0 00000000 		.4byte	0
+ 3390 00b4 00000000 		.4byte	0
+ 3391              		.section	.debug_line,"",%progbits
+ 3392              	.Ldebug_line0:
+ 3393 0000 D0040000 		.section	.debug_str,"MS",%progbits,1
+ 3393      0200A002 
+ 3393      00000201 
+ARM GAS  C:\Users\brenn\AppData\Local\Temp\ccOzUpww.s 			page 66
+
+
+ 3393      FB0E0D00 
+ 3393      01010101 
+ 3394              	.LASF31:
+ 3395 0000 72657375 		.ascii	"result\000"
+ 3395      6C7400
+ 3396              	.LASF36:
+ 3397 0007 73657276 		.ascii	"servo_press_down_arrow_key\000"
+ 3397      6F5F7072 
+ 3397      6573735F 
+ 3397      646F776E 
+ 3397      5F617272 
+ 3398              	.LASF24:
+ 3399 0022 726F775F 		.ascii	"row_number\000"
+ 3399      6E756D62 
+ 3399      657200
+ 3400              	.LASF41:
+ 3401 002d 73656E64 		.ascii	"send_data_to_PC\000"
+ 3401      5F646174 
+ 3401      615F746F 
+ 3401      5F504300 
+ 3402              	.LASF47:
+ 3403 003d 52585F49 		.ascii	"RX_ISR_Handler\000"
+ 3403      53525F48 
+ 3403      616E646C 
+ 3403      657200
+ 3404              	.LASF34:
+ 3405 004c 73657276 		.ascii	"servo_press_spacebar\000"
+ 3405      6F5F7072 
+ 3405      6573735F 
+ 3405      73706163 
+ 3405      65626172 
+ 3406              	.LASF71:
+ 3407 0061 4144435F 		.ascii	"ADC_Read32\000"
+ 3407      52656164 
+ 3407      333200
+ 3408              	.LASF77:
+ 3409 006c 56444143 		.ascii	"VDAC_SetValue\000"
+ 3409      5F536574 
+ 3409      56616C75 
+ 3409      6500
+ 3410              	.LASF5:
+ 3411 007a 73686F72 		.ascii	"short int\000"
+ 3411      7420696E 
+ 3411      7400
+ 3412              	.LASF12:
+ 3413 0084 73697A65 		.ascii	"sizetype\000"
+ 3413      74797065 
+ 3413      00
+ 3414              	.LASF43:
+ 3415 008d 706C6179 		.ascii	"play_sound_jump\000"
+ 3415      5F736F75 
+ 3415      6E645F6A 
+ 3415      756D7000 
+ 3416              	.LASF62:
+ 3417 009d 69735F72 		.ascii	"is_running\000"
+ 3417      756E6E69 
+ 3417      6E6700
+ARM GAS  C:\Users\brenn\AppData\Local\Temp\ccOzUpww.s 			page 67
+
+
+ 3418              	.LASF80:
+ 3419 00a8 55415254 		.ascii	"UART_ReadRxStatus\000"
+ 3419      5F526561 
+ 3419      64527853 
+ 3419      74617475 
+ 3419      7300
+ 3420              	.LASF105:
+ 3421 00ba 6D61696E 		.ascii	"main\000"
+ 3421      00
+ 3422              	.LASF33:
+ 3423 00bf 69735F64 		.ascii	"is_dino_close_flying_obstacle\000"
+ 3423      696E6F5F 
+ 3423      636C6F73 
+ 3423      655F666C 
+ 3423      79696E67 
+ 3424              	.LASF83:
+ 3425 00dd 7374726E 		.ascii	"strncmp\000"
+ 3425      636D7000 
+ 3426              	.LASF89:
+ 3427 00e5 54696D65 		.ascii	"Timer_ISR_StartEx\000"
+ 3427      725F4953 
+ 3427      525F5374 
+ 3427      61727445 
+ 3427      7800
+ 3428              	.LASF39:
+ 3429 00f7 76616C75 		.ascii	"value\000"
+ 3429      6500
+ 3430              	.LASF76:
+ 3431 00fd 55415254 		.ascii	"UART_PutString\000"
+ 3431      5F507574 
+ 3431      53747269 
+ 3431      6E6700
+ 3432              	.LASF16:
+ 3433 010c 75696E74 		.ascii	"uint8_t\000"
+ 3433      385F7400 
+ 3434              	.LASF98:
+ 3435 0114 53575F31 		.ascii	"SW_1_Read\000"
+ 3435      5F526561 
+ 3435      6400
+ 3436              	.LASF60:
+ 3437 011e 6A756D70 		.ascii	"jump_audio_vector\000"
+ 3437      5F617564 
+ 3437      696F5F76 
+ 3437      6563746F 
+ 3437      7200
+ 3438              	.LASF18:
+ 3439 0130 75696E74 		.ascii	"uint8\000"
+ 3439      3800
+ 3440              	.LASF93:
+ 3441 0136 56444143 		.ascii	"VDAC_Start\000"
+ 3441      5F537461 
+ 3441      727400
+ 3442              	.LASF17:
+ 3443 0141 696E7433 		.ascii	"int32_t\000"
+ 3443      325F7400 
+ 3444              	.LASF56:
+ 3445 0149 75617274 		.ascii	"uart_rx_counter\000"
+ARM GAS  C:\Users\brenn\AppData\Local\Temp\ccOzUpww.s 			page 68
+
+
+ 3445      5F72785F 
+ 3445      636F756E 
+ 3445      74657200 
+ 3446              	.LASF25:
+ 3447 0159 636F6C75 		.ascii	"column_number\000"
+ 3447      6D6E5F6E 
+ 3447      756D6265 
+ 3447      7200
+ 3448              	.LASF91:
+ 3449 0167 436C6F63 		.ascii	"Clock_Start\000"
+ 3449      6B5F5374 
+ 3449      61727400 
+ 3450              	.LASF50:
+ 3451 0173 64696E6F 		.ascii	"dino_increase_score\000"
+ 3451      5F696E63 
+ 3451      72656173 
+ 3451      655F7363 
+ 3451      6F726500 
+ 3452              	.LASF55:
+ 3453 0187 73636F72 		.ascii	"score_message\000"
+ 3453      655F6D65 
+ 3453      73736167 
+ 3453      6500
+ 3454              	.LASF15:
+ 3455 0195 666C6F61 		.ascii	"float\000"
+ 3455      7400
+ 3456              	.LASF69:
+ 3457 019b 414D7578 		.ascii	"AMux_Select\000"
+ 3457      5F53656C 
+ 3457      65637400 
+ 3458              	.LASF1:
+ 3459 01a7 6C6F6E67 		.ascii	"long long int\000"
+ 3459      206C6F6E 
+ 3459      6720696E 
+ 3459      7400
+ 3460              	.LASF11:
+ 3461 01b5 6C6F6E67 		.ascii	"long long unsigned int\000"
+ 3461      206C6F6E 
+ 3461      6720756E 
+ 3461      7369676E 
+ 3461      65642069 
+ 3462              	.LASF65:
+ 3463 01cc 50574D5F 		.ascii	"PWM_WriteCompare1\000"
+ 3463      57726974 
+ 3463      65436F6D 
+ 3463      70617265 
+ 3463      3100
+ 3464              	.LASF66:
+ 3465 01de 50574D5F 		.ascii	"PWM_WriteCompare2\000"
+ 3465      57726974 
+ 3465      65436F6D 
+ 3465      70617265 
+ 3465      3200
+ 3466              	.LASF95:
+ 3467 01f0 4144435F 		.ascii	"ADC_Start\000"
+ 3467      53746172 
+ 3467      7400
+ARM GAS  C:\Users\brenn\AppData\Local\Temp\ccOzUpww.s 			page 69
+
+
+ 3468              	.LASF49:
+ 3469 01fa 64696E6F 		.ascii	"dino_reset\000"
+ 3469      5F726573 
+ 3469      657400
+ 3470              	.LASF10:
+ 3471 0205 6C6F6E67 		.ascii	"long unsigned int\000"
+ 3471      20756E73 
+ 3471      69676E65 
+ 3471      6420696E 
+ 3471      7400
+ 3472              	.LASF78:
+ 3473 0217 54696D65 		.ascii	"Timer_ISR_Enable\000"
+ 3473      725F4953 
+ 3473      525F456E 
+ 3473      61626C65 
+ 3473      00
+ 3474              	.LASF7:
+ 3475 0228 5F5F7569 		.ascii	"__uint8_t\000"
+ 3475      6E74385F 
+ 3475      7400
+ 3476              	.LASF74:
+ 3477 0232 4C45445F 		.ascii	"LED_3_Write\000"
+ 3477      335F5772 
+ 3477      69746500 
+ 3478              	.LASF22:
+ 3479 023e 7072696E 		.ascii	"print_on_LCD\000"
+ 3479      745F6F6E 
+ 3479      5F4C4344 
+ 3479      00
+ 3480              	.LASF84:
+ 3481 024b 54696D65 		.ascii	"Timer_ISR_Disable\000"
+ 3481      725F4953 
+ 3481      525F4469 
+ 3481      7361626C 
+ 3481      6500
+ 3482              	.LASF97:
+ 3483 025d 4C43445F 		.ascii	"LCD_Start\000"
+ 3483      53746172 
+ 3483      7400
+ 3484              	.LASF2:
+ 3485 0267 6C6F6E67 		.ascii	"long double\000"
+ 3485      20646F75 
+ 3485      626C6500 
+ 3486              	.LASF99:
+ 3487 0273 6B657970 		.ascii	"keypadScan\000"
+ 3487      61645363 
+ 3487      616E00
+ 3488              	.LASF4:
+ 3489 027e 756E7369 		.ascii	"unsigned char\000"
+ 3489      676E6564 
+ 3489      20636861 
+ 3489      7200
+ 3490              	.LASF81:
+ 3491 028c 55415254 		.ascii	"UART_ReadRxData\000"
+ 3491      5F526561 
+ 3491      64527844 
+ 3491      61746100 
+ARM GAS  C:\Users\brenn\AppData\Local\Temp\ccOzUpww.s 			page 70
+
+
+ 3492              	.LASF85:
+ 3493 029c 73707269 		.ascii	"sprintf\000"
+ 3493      6E746600 
+ 3494              	.LASF45:
+ 3495 02a4 64696E6F 		.ascii	"dino_jump\000"
+ 3495      5F6A756D 
+ 3495      7000
+ 3496              	.LASF35:
+ 3497 02ae 73657276 		.ascii	"servo_release_spacebar\000"
+ 3497      6F5F7265 
+ 3497      6C656173 
+ 3497      655F7370 
+ 3497      61636562 
+ 3498              	.LASF3:
+ 3499 02c5 7369676E 		.ascii	"signed char\000"
+ 3499      65642063 
+ 3499      68617200 
+ 3500              	.LASF58:
+ 3501 02d1 73636F72 		.ascii	"score\000"
+ 3501      6500
+ 3502              	.LASF21:
+ 3503 02d7 696E6974 		.ascii	"initialize_audio_vector\000"
+ 3503      69616C69 
+ 3503      7A655F61 
+ 3503      7564696F 
+ 3503      5F766563 
+ 3504              	.LASF27:
+ 3505 02ef 64657465 		.ascii	"detect_obstacle\000"
+ 3505      63745F6F 
+ 3505      62737461 
+ 3505      636C6500 
+ 3506              	.LASF20:
+ 3507 02ff 74797065 		.ascii	"type\000"
+ 3507      00
+ 3508              	.LASF87:
+ 3509 0304 52585F49 		.ascii	"RX_ISR_StartEx\000"
+ 3509      53525F53 
+ 3509      74617274 
+ 3509      457800
+ 3510              	.LASF0:
+ 3511 0313 756E7369 		.ascii	"unsigned int\000"
+ 3511      676E6564 
+ 3511      20696E74 
+ 3511      00
+ 3512              	.LASF68:
+ 3513 0320 4C43445F 		.ascii	"LCD_PrintString\000"
+ 3513      5072696E 
+ 3513      74537472 
+ 3513      696E6700 
+ 3514              	.LASF30:
+ 3515 0330 69735F64 		.ascii	"is_dino_close_ground_obstacle\000"
+ 3515      696E6F5F 
+ 3515      636C6F73 
+ 3515      655F6772 
+ 3515      6F756E64 
+ 3516              	.LASF53:
+ 3517 034e 75617274 		.ascii	"uart_rx_buffer\000"
+ARM GAS  C:\Users\brenn\AppData\Local\Temp\ccOzUpww.s 			page 71
+
+
+ 3517      5F72785F 
+ 3517      62756666 
+ 3517      657200
+ 3518              	.LASF57:
+ 3519 035d 73706565 		.ascii	"speed\000"
+ 3519      6400
+ 3520              	.LASF63:
+ 3521 0363 69735F67 		.ascii	"is_ground_obstacle_detected\000"
+ 3521      726F756E 
+ 3521      645F6F62 
+ 3521      73746163 
+ 3521      6C655F64 
+ 3522              	.LASF6:
+ 3523 037f 73686F72 		.ascii	"short unsigned int\000"
+ 3523      7420756E 
+ 3523      7369676E 
+ 3523      65642069 
+ 3523      6E7400
+ 3524              	.LASF94:
+ 3525 0392 414D7578 		.ascii	"AMux_Start\000"
+ 3525      5F537461 
+ 3525      727400
+ 3526              	.LASF48:
+ 3527 039d 73746174 		.ascii	"status\000"
+ 3527      757300
+ 3528              	.LASF13:
+ 3529 03a4 63686172 		.ascii	"char\000"
+ 3529      00
+ 3530              	.LASF101:
+ 3531 03a9 53575F33 		.ascii	"SW_3_Read\000"
+ 3531      5F526561 
+ 3531      6400
+ 3532              	.LASF9:
+ 3533 03b3 6C6F6E67 		.ascii	"long int\000"
+ 3533      20696E74 
+ 3533      00
+ 3534              	.LASF86:
+ 3535 03bc 54696D65 		.ascii	"Timer_ReadStatusRegister\000"
+ 3535      725F5265 
+ 3535      61645374 
+ 3535      61747573 
+ 3535      52656769 
+ 3536              	.LASF88:
+ 3537 03d5 55415254 		.ascii	"UART_Start\000"
+ 3537      5F537461 
+ 3537      727400
+ 3538              	.LASF61:
+ 3539 03e0 6475636B 		.ascii	"duck_audio_vector\000"
+ 3539      5F617564 
+ 3539      696F5F76 
+ 3539      6563746F 
+ 3539      7200
+ 3540              	.LASF64:
+ 3541 03f2 69735F66 		.ascii	"is_flying_obstacle_detected\000"
+ 3541      6C79696E 
+ 3541      675F6F62 
+ 3541      73746163 
+ARM GAS  C:\Users\brenn\AppData\Local\Temp\ccOzUpww.s 			page 72
+
+
+ 3541      6C655F64 
+ 3542              	.LASF29:
+ 3543 040e 6475636B 		.ascii	"duck_value\000"
+ 3543      5F76616C 
+ 3543      756500
+ 3544              	.LASF32:
+ 3545 0419 5F426F6F 		.ascii	"_Bool\000"
+ 3545      6C00
+ 3546              	.LASF42:
+ 3547 041f 64617461 		.ascii	"data\000"
+ 3547      00
+ 3548              	.LASF51:
+ 3549 0424 54696D65 		.ascii	"Timer_ISR_Handler\000"
+ 3549      725F4953 
+ 3549      525F4861 
+ 3549      6E646C65 
+ 3549      7200
+ 3550              	.LASF104:
+ 3551 0436 433A5C55 		.ascii	"C:\\Users\\brenn\\Downloads\\BA3\\ELECH310\\Project"
+ 3551      73657273 
+ 3551      5C627265 
+ 3551      6E6E5C44 
+ 3551      6F776E6C 
+ 3552 0463 5C4E6576 		.ascii	"\\Never Lose.cydsn\000"
+ 3552      6572204C 
+ 3552      6F73652E 
+ 3552      63796473 
+ 3552      6E00
+ 3553              	.LASF40:
+ 3554 0475 7365745F 		.ascii	"set_LED3_and_LED4\000"
+ 3554      4C454433 
+ 3554      5F616E64 
+ 3554      5F4C4544 
+ 3554      3400
+ 3555              	.LASF28:
+ 3556 0487 6A756D70 		.ascii	"jump_value\000"
+ 3556      5F76616C 
+ 3556      756500
+ 3557              	.LASF103:
+ 3558 0492 6D61696E 		.ascii	"main.c\000"
+ 3558      2E6300
+ 3559              	.LASF23:
+ 3560 0499 6D657373 		.ascii	"message\000"
+ 3560      61676500 
+ 3561              	.LASF14:
+ 3562 04a1 646F7562 		.ascii	"double\000"
+ 3562      6C6500
+ 3563              	.LASF19:
+ 3564 04a8 61756469 		.ascii	"audio_vector\000"
+ 3564      6F5F7665 
+ 3564      63746F72 
+ 3564      00
+ 3565              	.LASF90:
+ 3566 04b5 54696D65 		.ascii	"Timer_Start\000"
+ 3566      725F5374 
+ 3566      61727400 
+ 3567              	.LASF59:
+ARM GAS  C:\Users\brenn\AppData\Local\Temp\ccOzUpww.s 			page 73
+
+
+ 3568 04c1 636F756E 		.ascii	"count\000"
+ 3568      7400
+ 3569              	.LASF8:
+ 3570 04c7 5F5F696E 		.ascii	"__int32_t\000"
+ 3570      7433325F 
+ 3570      7400
+ 3571              	.LASF37:
+ 3572 04d1 73657276 		.ascii	"servo_release_down_arrow_key\000"
+ 3572      6F5F7265 
+ 3572      6C656173 
+ 3572      655F646F 
+ 3572      776E5F61 
+ 3573              	.LASF79:
+ 3574 04ee 4C43445F 		.ascii	"LCD_WriteControl\000"
+ 3574      57726974 
+ 3574      65436F6E 
+ 3574      74726F6C 
+ 3574      00
+ 3575              	.LASF92:
+ 3576 04ff 50574D5F 		.ascii	"PWM_Start\000"
+ 3576      53746172 
+ 3576      7400
+ 3577              	.LASF26:
+ 3578 0509 696E6974 		.ascii	"initialize_servos\000"
+ 3578      69616C69 
+ 3578      7A655F73 
+ 3578      6572766F 
+ 3578      7300
+ 3579              	.LASF73:
+ 3580 051b 4C45445F 		.ascii	"LED_2_Write\000"
+ 3580      325F5772 
+ 3580      69746500 
+ 3581              	.LASF67:
+ 3582 0527 4C43445F 		.ascii	"LCD_Position\000"
+ 3582      506F7369 
+ 3582      74696F6E 
+ 3582      00
+ 3583              	.LASF44:
+ 3584 0534 706C6179 		.ascii	"play_sound_duck\000"
+ 3584      5F736F75 
+ 3584      6E645F64 
+ 3584      75636B00 
+ 3585              	.LASF96:
+ 3586 0544 4144435F 		.ascii	"ADC_StartConvert\000"
+ 3586      53746172 
+ 3586      74436F6E 
+ 3586      76657274 
+ 3586      00
+ 3587              	.LASF54:
+ 3588 0555 75617274 		.ascii	"uart_rx_data\000"
+ 3588      5F72785F 
+ 3588      64617461 
+ 3588      00
+ 3589              	.LASF100:
+ 3590 0562 53575F32 		.ascii	"SW_2_Read\000"
+ 3590      5F526561 
+ 3590      6400
+ARM GAS  C:\Users\brenn\AppData\Local\Temp\ccOzUpww.s 			page 74
+
+
+ 3591              	.LASF38:
+ 3592 056c 7365745F 		.ascii	"set_LED1_and_LED2\000"
+ 3592      4C454431 
+ 3592      5F616E64 
+ 3592      5F4C4544 
+ 3592      3200
+ 3593              	.LASF52:
+ 3594 057e 49544D5F 		.ascii	"ITM_RxBuffer\000"
+ 3594      52784275 
+ 3594      66666572 
+ 3594      00
+ 3595              	.LASF102:
+ 3596 058b 474E5520 		.ascii	"GNU C11 5.4.1 20160609 (release) [ARM/embedded-5-br"
+ 3596      43313120 
+ 3596      352E342E 
+ 3596      31203230 
+ 3596      31363036 
+ 3597 05be 616E6368 		.ascii	"anch revision 237715] -mcpu=cortex-m3 -mthumb -g -O"
+ 3597      20726576 
+ 3597      6973696F 
+ 3597      6E203233 
+ 3597      37373135 
+ 3598 05f1 67202D66 		.ascii	"g -ffunction-sections -ffat-lto-objects\000"
+ 3598      66756E63 
+ 3598      74696F6E 
+ 3598      2D736563 
+ 3598      74696F6E 
+ 3599              	.LASF70:
+ 3600 0619 43794465 		.ascii	"CyDelay\000"
+ 3600      6C617900 
+ 3601              	.LASF75:
+ 3602 0621 4C45445F 		.ascii	"LED_4_Write\000"
+ 3602      345F5772 
+ 3602      69746500 
+ 3603              	.LASF46:
+ 3604 062d 64696E6F 		.ascii	"dino_duck\000"
+ 3604      5F647563 
+ 3604      6B00
+ 3605              	.LASF72:
+ 3606 0637 4C45445F 		.ascii	"LED_1_Write\000"
+ 3606      315F5772 
+ 3606      69746500 
+ 3607              	.LASF82:
+ 3608 0643 55415254 		.ascii	"UART_PutChar\000"
+ 3608      5F507574 
+ 3608      43686172 
+ 3608      00
+ 3609              		.ident	"GCC: (GNU Tools for ARM Embedded Processors) 5.4.1 20160609 (release) [ARM/embedded-5-bran

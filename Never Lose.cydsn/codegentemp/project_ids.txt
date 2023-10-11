@@ -1,0 +1,6 @@
+C:\Users\brenn\Downloads\BA3\ELECH310\Project\Never Lose.cydsn\Never Lose.cyprj|1cd07c00-d38b-4add-ab63-93dcc1c87211
+C:\Program Files (x86)\Cypress\PSoC Creator\4.4\PSoC Creator\psoc\content\default\CyAnnotationLibrary\CyAnnotationLibrary.cylib\CyAnnotationLibrary.cyprj|ed03b4b3-3b33-41ae-8491-f8ae51ef9c06
+C:\Users\brenn\Documents\PSoC Creator\4.4\Downloads ( 4.4).cylib\Downloads ( 4.4).cyprj|077180f6-c052-4df5-b13b-adffc5baaac1
+C:\Program Files (x86)\Cypress\PSoC Creator\4.4\PSoC Creator\psoc\content\cycomponentlibraryupdates\CyComponentLibraryUpdates.cylib\CyComponentLibraryUpdates.cyprj|b64fa456-f407-46d3-9c61-a0b232c2d7fe
+C:\Program Files (x86)\Cypress\PSoC Creator\4.4\PSoC Creator\psoc\content\cycomponentlibrary\CyComponentLibrary.cylib\CyComponentLibrary.cyprj|397ad3f8-1849-4188-9046-ccd8a1fca6ea
+C:\Program Files (x86)\Cypress\PSoC Creator\4.4\PSoC Creator\psoc\content\cyprimitives\CyPrimitives.cylib\CyPrimitives.cyprj|9ac66988-937e-4762-8de8-d62d44b1627f
